@@ -1,0 +1,8 @@
+id: bad-source
+type: threshold
+title: Mauvaise source
+applies_to: {}
+value: 100
+source_url: https://example.com/not-official
+verified_on: 2026-08-07
+valid_from: 2025-01-01

@@ -1,0 +1,10 @@
+id: ok-obligation
+type: obligation
+title: Obligation de test
+applies_to:
+  legal_forms: [micro]
+schedule:
+  kind: periodic
+source_url: https://www.autoentrepreneur.urssaf.fr/
+verified_on: 2026-08-07
+valid_from: 2025-01-01
