@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { RuleSchema } from './types';
+import {
+  IsoDateSchema,
+  ObligationSchema,
+  RoadmapStepSchema,
+  RuleSchema,
+  ThresholdSchema,
+} from './types';
 
 const base = {
   id: 'test-rule',
@@ -10,27 +16,250 @@ const base = {
   applies_to: { legal_forms: ['micro'] },
 };
 
+const threshold = (overrides: Record<string, unknown> = {}) => ({
+  ...base,
+  type: 'threshold',
+  value: 1,
+  ...overrides,
+});
+
+const obligation = (overrides: Record<string, unknown> = {}) => ({
+  ...base,
+  type: 'obligation',
+  schedule: { kind: 'periodic' },
+  ...overrides,
+});
+
+/** Parses and asserts failure, returning the first issue so tests can check path/message. */
+function firstIssue(input: unknown) {
+  const result = RuleSchema.safeParse(input);
+  if (result.success) throw new Error('expected parse to fail, but it succeeded');
+  return result.error.issues[0];
+}
+
 describe('RuleSchema', () => {
   it('parses an obligation with periodic schedule', () => {
-    const r = RuleSchema.parse({ ...base, type: 'obligation', schedule: { kind: 'periodic' } });
+    const r = RuleSchema.parse(obligation());
     expect(r.type).toBe('obligation');
   });
+
+  it('parses an obligation with an annual schedule', () => {
+    const r = ObligationSchema.parse(obligation({ schedule: { kind: 'annual', month: 5, day: 20 } }));
+    expect(r.schedule).toEqual({ kind: 'annual', month: 5, day: 20 });
+  });
+
+  it('keeps an explicit periodic frequency', () => {
+    const r = ObligationSchema.parse(obligation({ schedule: { kind: 'periodic', frequency: 'quarterly' } }));
+    expect(r.schedule).toEqual({ kind: 'periodic', frequency: 'quarterly' });
+  });
+
+  const invalidSchedules: Array<[unknown, string]> = [
+    [{ kind: 'annual', month: 13, day: 1 }, 'month above 12'],
+    [{ kind: 'annual', month: 0, day: 1 }, 'month below 1'],
+    [{ kind: 'annual', month: 6, day: 0 }, 'day below 1'],
+    [{ kind: 'annual', month: 6, day: 32 }, 'day above 31'],
+    [{ kind: 'annual', month: 6.5, day: 1 }, 'non-integer month'],
+    [{ kind: 'annual', month: 6 }, 'missing day'],
+    [{ kind: 'periodic', frequency: 'daily' }, 'unknown frequency'],
+    [{ kind: 'periodic', frequencyy: 'monthly' }, 'typo key in schedule'],
+    [{ kind: 'weekly' }, 'unknown schedule kind'],
+  ];
+
+  it.each(invalidSchedules)('rejects schedule %j (%s)', (schedule) => {
+    expect(() => RuleSchema.parse(obligation({ schedule }))).toThrow();
+  });
+
   it('defaults threshold warn_ratio to 0.8', () => {
-    const r = RuleSchema.parse({ ...base, type: 'threshold', value: 77700 });
-    if (r.type === 'threshold') expect(r.warn_ratio).toBe(0.8);
+    const r = ThresholdSchema.parse(threshold({ value: 77700 }));
+    expect(r.warn_ratio).toBe(0.8);
   });
+
+  it('keeps an explicit warn_ratio', () => {
+    const r = ThresholdSchema.parse(threshold({ value: 77700, warn_ratio: 0.5 }));
+    expect(r.warn_ratio).toBe(0.5);
+  });
+
+  it.each([
+    [0, 'zero is degenerate'],
+    [1, 'one is degenerate'],
+    [-0.1, 'below range'],
+    [1.5, 'above range'],
+  ])('rejects warn_ratio %s (%s)', (warn_ratio) => {
+    expect(() => RuleSchema.parse(threshold({ warn_ratio }))).toThrow();
+  });
+
+  it.each([
+    [0, 'zero'],
+    [-1, 'negative'],
+  ])('rejects threshold value %s (%s)', (value) => {
+    expect(() => RuleSchema.parse(threshold({ value }))).toThrow();
+  });
+
   it('parses a roadmap step with empty prerequisites by default', () => {
-    const r = RuleSchema.parse({ ...base, type: 'roadmap_step', phase: 'lancement' });
-    if (r.type === 'roadmap_step') expect(r.prerequisites).toEqual([]);
+    const r = RoadmapStepSchema.parse({ ...base, type: 'roadmap_step', phase: 'lancement' });
+    expect(r.prerequisites).toEqual([]);
   });
-  it('rejects non-official source_url', () => {
+
+  it('keeps explicit prerequisites', () => {
+    const r = RoadmapStepSchema.parse({
+      ...base,
+      type: 'roadmap_step',
+      phase: 'lancement',
+      prerequisites: ['immatriculation-siret'],
+    });
+    expect(r.prerequisites).toEqual(['immatriculation-siret']);
+  });
+
+  it('rejects an unknown lifecycle phase', () => {
+    expect(() => RuleSchema.parse({ ...base, type: 'roadmap_step', phase: 'scaling' })).toThrow();
+  });
+
+  it('rejects an unknown rule type', () => {
+    expect(() => RuleSchema.parse({ ...base, type: 'reminder' })).toThrow();
+  });
+});
+
+describe('RuleSchema source_url', () => {
+  it('rejects non-official source_url with an explanatory message', () => {
+    expect(() => RuleSchema.parse(threshold({ source_url: 'https://example.com/x' }))).toThrow(/official/);
+  });
+
+  it('rejects an http source_url', () => {
+    expect(() => RuleSchema.parse(threshold({ source_url: 'http://www.impots.gouv.fr/x' }))).toThrow(/official/);
+  });
+
+  it('reports the failure on the source_url path', () => {
+    const issue = firstIssue(threshold({ source_url: 'https://example.com/x' }));
+    expect(issue.path).toEqual(['source_url']);
+    expect(issue.message).toMatch(/official/);
+  });
+
+  it('accepts every allowlisted domain', () => {
+    expect(() => RuleSchema.parse(threshold({ source_url: 'https://www.urssaf.fr/portail/x' }))).not.toThrow();
+  });
+});
+
+describe('RuleSchema dates', () => {
+  it('exports IsoDateSchema', () => {
+    expect(IsoDateSchema.parse('2026-08-07')).toBe('2026-08-07');
+    expect(IsoDateSchema.safeParse('2026-02-30').success).toBe(false);
+  });
+
+  it.each([
+    ['07/08/2026', 'wrong separator and order'],
+    ['2026-8-7', 'unpadded month and day'],
+    ['26-08-07', 'two-digit year'],
+    ['2026-08-07T00:00:00Z', 'datetime, not a date'],
+    ['', 'empty'],
+  ])('rejects verified_on %s (%s)', (verified_on) => {
+    expect(() => RuleSchema.parse(threshold({ verified_on }))).toThrow();
+  });
+
+  it.each([
+    ['2025-13-45', 'month 13 and day 45'],
+    ['2026-02-30', 'February 30 does not exist'],
+    ['2025-02-29', '2025 is not a leap year'],
+    ['2025-04-31', 'April has 30 days'],
+    ['2025-00-10', 'month zero'],
+    ['2025-01-00', 'day zero'],
+  ])('rejects calendar-invalid date %s (%s)', (verified_on) => {
+    expect(() => RuleSchema.parse(threshold({ verified_on }))).toThrow();
+  });
+
+  it('accepts a real leap day', () => {
+    expect(() => RuleSchema.parse(threshold({ verified_on: '2024-02-29' }))).not.toThrow();
+  });
+
+  it('reports a bad verified_on on its own path', () => {
+    const issue = firstIssue(threshold({ verified_on: '07/08/2026' }));
+    expect(issue.path).toEqual(['verified_on']);
+  });
+
+  it('rejects a bad valid_from', () => {
+    const issue = firstIssue(threshold({ valid_from: '01/01/2025' }));
+    expect(issue.path).toEqual(['valid_from']);
+  });
+
+  it('rejects a bad valid_until', () => {
+    const issue = firstIssue(threshold({ valid_until: '2025-99-99' }));
+    expect(issue.path).toEqual(['valid_until']);
+  });
+
+  it('accepts a well-ordered millesime', () => {
     expect(() =>
-      RuleSchema.parse({ ...base, type: 'threshold', value: 1, source_url: 'https://example.com/x' })
+      RuleSchema.parse(threshold({ valid_from: '2025-01-01', valid_until: '2025-12-31' }))
+    ).not.toThrow();
+  });
+
+  it('accepts valid_until equal to valid_from', () => {
+    expect(() =>
+      RuleSchema.parse(threshold({ valid_from: '2025-01-01', valid_until: '2025-01-01' }))
+    ).not.toThrow();
+  });
+
+  it('rejects an inverted millesime on the valid_until path', () => {
+    const issue = firstIssue(threshold({ valid_from: '2025-01-01', valid_until: '2024-12-31' }));
+    expect(issue.path).toEqual(['valid_until']);
+    expect(issue.message).toMatch(/valid_from/);
+  });
+});
+
+describe('RuleSchema id', () => {
+  it.each([
+    ['test-rule', 'lowercase with hyphen'],
+    ['rule2', 'digits'],
+    ['micro-ca-threshold-2025', 'long slug'],
+  ])('accepts id %s (%s)', (id) => {
+    expect(() => RuleSchema.parse(threshold({ id }))).not.toThrow();
+  });
+
+  it.each([
+    ['test rule', 'space'],
+    ['TEST-RULE', 'uppercase'],
+    ['test_rule', 'underscore'],
+    ['test.rule', 'dot'],
+    ['', 'empty'],
+  ])('rejects id %s (%s)', (id) => {
+    expect(() => RuleSchema.parse(threshold({ id }))).toThrow();
+  });
+});
+
+describe('RuleSchema strictness', () => {
+  it('rejects an unknown top-level key', () => {
+    expect(() => RuleSchema.parse(threshold({ warn_ratioo: 0.9 }))).toThrow();
+  });
+
+  it('rejects an unknown applies_to key', () => {
+    expect(() => RuleSchema.parse(threshold({ applies_to: { legal_form: ['micro'] } }))).toThrow();
+  });
+
+  it('rejects an unknown legal form', () => {
+    expect(() => RuleSchema.parse(threshold({ applies_to: { legal_forms: ['sarl'] } }))).toThrow();
+  });
+
+  it('rejects an unknown activity category', () => {
+    expect(() =>
+      RuleSchema.parse(threshold({ applies_to: { activity_categories: ['vente-bic'] } }))
     ).toThrow();
   });
-  it('rejects bad date format', () => {
+});
+
+describe('AppliesTo options vocabulary', () => {
+  it('accepts known options', () => {
     expect(() =>
-      RuleSchema.parse({ ...base, type: 'threshold', value: 1, verified_on: '07/08/2026' })
-    ).toThrow();
+      RuleSchema.parse(
+        threshold({ applies_to: { options_all: ['acre'], options_none: ['versement-liberatoire'] } })
+      )
+    ).not.toThrow();
+  });
+
+  const invalidOptions: Array<[unknown, string]> = [
+    [{ options_all: ['acr'] }, 'typo in options_all'],
+    [{ options_none: ['acre-2025'] }, 'unknown option in options_none'],
+    [{ options_all: ['ACRE'] }, 'wrong case'],
+  ];
+
+  it.each(invalidOptions)('rejects %j (%s)', (applies_to) => {
+    expect(() => RuleSchema.parse(threshold({ applies_to }))).toThrow();
   });
 });
