@@ -12,6 +12,8 @@
 
 **Branch note:** Greenfield solo repo — work directly on `master`, commit per task step.
 
+**Amendments during execution (Task 2 review):** the schema contract in `src/lib/rules/types.ts` is stricter than the snippets below — source URLs must be **https** on official domains (`OFFICIAL_SUFFIXES` exported); dates are calendar-validated (`IsoDateSchema` exported; `Millesime` type exported for Task 6); `valid_until >= valid_from` enforced; rule `id` must match `/^[a-z0-9-]+$/`; `options_all`/`options_none` use the closed `KnownOptionSchema` enum (`acre`, `versement-liberatoire`); all rule/schedule objects are strictObject (unknown keys reject); `warn_ratio` is exclusive (0,1). Deferred hardening: prerequisite referential integrity → Task 3 loader; `verified_on` not-in-future + staleness warning → Task 4 script. All plan YAML/fixtures already conform.
+
 ---
 
 ## File Structure
