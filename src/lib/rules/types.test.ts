@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { OFFICIAL_SUFFIXES } from './sources';
 import {
   IsoDateSchema,
   ObligationSchema,
@@ -61,12 +62,31 @@ describe('RuleSchema', () => {
     [{ kind: 'annual', month: 6.5, day: 1 }, 'non-integer month'],
     [{ kind: 'annual', month: 6 }, 'missing day'],
     [{ kind: 'periodic', frequency: 'daily' }, 'unknown frequency'],
-    [{ kind: 'periodic', frequencyy: 'monthly' }, 'typo key in schedule'],
+    [{ kind: 'periodic', frequencyy: 'monthly' }, 'typo key in periodic schedule'],
+    [{ kind: 'annual', month: 5, day: 20, dya: 1 }, 'typo key in annual schedule'],
     [{ kind: 'weekly' }, 'unknown schedule kind'],
+    [{ kind: 'annual', month: 2, day: 31 }, 'February never has 31 days'],
+    [{ kind: 'annual', month: 2, day: 30 }, 'February never has 30 days'],
+    [{ kind: 'annual', month: 4, day: 31 }, 'April has 30 days'],
+    [{ kind: 'annual', month: 9, day: 31 }, 'September has 30 days'],
   ];
 
   it.each(invalidSchedules)('rejects schedule %j (%s)', (schedule) => {
     expect(() => RuleSchema.parse(obligation({ schedule }))).toThrow();
+  });
+
+  it.each([
+    [{ kind: 'annual', month: 2, day: 29 }, 'February 29 stays legal (leap years exist)'],
+    [{ kind: 'annual', month: 1, day: 31 }, 'January has 31 days'],
+    [{ kind: 'annual', month: 4, day: 30 }, 'April has 30 days'],
+  ])('accepts schedule %j (%s)', (schedule) => {
+    expect(() => RuleSchema.parse(obligation({ schedule }))).not.toThrow();
+  });
+
+  it('reports an impossible month/day pair on the day path', () => {
+    const issue = firstIssue(obligation({ schedule: { kind: 'annual', month: 2, day: 31 } }));
+    expect(issue.path).toEqual(['schedule', 'day']);
+    expect(issue.message).toMatch(/no such day/);
   });
 
   it('defaults threshold warn_ratio to 0.8', () => {
@@ -110,6 +130,16 @@ describe('RuleSchema', () => {
     expect(r.prerequisites).toEqual(['immatriculation-siret']);
   });
 
+  it.each([
+    [['Bad Id'], 'space and uppercase'],
+    [[''], 'empty id'],
+    [['ok-id', 'BAD_ID'], 'one bad entry among good ones'],
+  ])('rejects prerequisites %j (%s)', (prerequisites) => {
+    expect(() =>
+      RuleSchema.parse({ ...base, type: 'roadmap_step', phase: 'lancement', prerequisites })
+    ).toThrow(/lowercase letters, digits and hyphens only/);
+  });
+
   it('rejects an unknown lifecycle phase', () => {
     expect(() => RuleSchema.parse({ ...base, type: 'roadmap_step', phase: 'scaling' })).toThrow();
   });
@@ -134,8 +164,8 @@ describe('RuleSchema source_url', () => {
     expect(issue.message).toMatch(/official/);
   });
 
-  it('accepts every allowlisted domain', () => {
-    expect(() => RuleSchema.parse(threshold({ source_url: 'https://www.urssaf.fr/portail/x' }))).not.toThrow();
+  it.each([...OFFICIAL_SUFFIXES])('accepts a source_url on %s', (suffix) => {
+    expect(() => RuleSchema.parse(threshold({ source_url: `https://www.${suffix}/x` }))).not.toThrow();
   });
 });
 
@@ -173,6 +203,18 @@ describe('RuleSchema dates', () => {
   it('reports a bad verified_on on its own path', () => {
     const issue = firstIssue(threshold({ verified_on: '07/08/2026' }));
     expect(issue.path).toEqual(['verified_on']);
+  });
+
+  it('reports exactly one issue for a malformed date, not format plus calendar', () => {
+    const result = RuleSchema.safeParse(threshold({ verified_on: '07/08/2026' }));
+    if (result.success) throw new Error('expected parse to fail, but it succeeded');
+    expect(result.error.issues).toHaveLength(1);
+    expect(result.error.issues[0].message).toMatch(/YYYY-MM-DD/);
+  });
+
+  it('reports the calendar issue when the format is fine', () => {
+    const issue = firstIssue(threshold({ verified_on: '2026-02-30' }));
+    expect(issue.message).toMatch(/calendar/);
   });
 
   it('rejects a bad valid_from', () => {
@@ -224,9 +266,39 @@ describe('RuleSchema id', () => {
   });
 });
 
+describe('RuleSchema title', () => {
+  it('trims surrounding whitespace', () => {
+    const r = ThresholdSchema.parse(threshold({ title: '  Test  ' }));
+    expect(r.title).toBe('Test');
+  });
+
+  it.each([
+    ['', 'empty'],
+    ['   ', 'spaces only'],
+    ['\t\n', 'tabs and newlines only'],
+  ])('rejects title %j (%s)', (title) => {
+    expect(() => RuleSchema.parse(threshold({ title }))).toThrow();
+  });
+});
+
 describe('RuleSchema strictness', () => {
-  it('rejects an unknown top-level key', () => {
+  it('rejects an unknown top-level key on a threshold', () => {
     expect(() => RuleSchema.parse(threshold({ warn_ratioo: 0.9 }))).toThrow();
+  });
+
+  it('rejects an unknown top-level key on an obligation', () => {
+    expect(() => RuleSchema.parse(obligation({ scheduleee: { kind: 'periodic' } }))).toThrow();
+  });
+
+  it('rejects an unknown top-level key on a roadmap step', () => {
+    expect(() =>
+      RuleSchema.parse({
+        ...base,
+        type: 'roadmap_step',
+        phase: 'lancement',
+        prerequisitess: [],
+      })
+    ).toThrow();
   });
 
   it('rejects an unknown applies_to key', () => {
