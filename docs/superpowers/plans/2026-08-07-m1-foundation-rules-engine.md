@@ -6,7 +6,7 @@
 
 **Architecture:** Next.js app (Vercel-ready) with a self-contained pure-TypeScript rules engine under `src/lib/rules/`. Truth lives in `rules/*.yaml` at the repo root — every record carries `source_url` (official domains only), `verified_on`, and a millésime. No database in M1; profiles are in-memory fixtures. Spec: `docs/superpowers/specs/2026-08-07-autostartuper-design.md`.
 
-**Tech Stack:** Next.js 15 (App Router, TS, Tailwind), zod, yaml, vitest, tsx, GitHub Actions.
+**Tech Stack:** Next.js 16 (App Router, TS, Tailwind), zod 4, yaml, vitest 4, tsx, GitHub Actions. (Versions as installed by Task 1 — plan snippets are zod-4 compatible; prefer `z.strictObject({...})` over the deprecated `z.object({...}).strict()`.)
 
 **Milestone context:** M1 of 6. M2 auth+assessment, M3 dashboards+preparer, M4 notifications, M5 AI edges, M6 truth watchdog. Later milestones consume `computeActions()` and the rule schemas defined here.
 
@@ -234,15 +234,13 @@ export type LegalForm = z.infer<typeof LegalFormSchema>;
 export type ActivityCategory = z.infer<typeof ActivityCategorySchema>;
 export type LifecyclePhase = z.infer<typeof LifecyclePhaseSchema>;
 
-export const AppliesToSchema = z
-  .object({
-    legal_forms: z.array(LegalFormSchema).optional(),
-    activity_categories: z.array(ActivityCategorySchema).optional(),
-    lifecycle_phases: z.array(LifecyclePhaseSchema).optional(),
-    options_all: z.array(z.string()).optional(),
-    options_none: z.array(z.string()).optional(),
-  })
-  .strict();
+export const AppliesToSchema = z.strictObject({
+  legal_forms: z.array(LegalFormSchema).optional(),
+  activity_categories: z.array(ActivityCategorySchema).optional(),
+  lifecycle_phases: z.array(LifecyclePhaseSchema).optional(),
+  options_all: z.array(z.string()).optional(),
+  options_none: z.array(z.string()).optional(),
+});
 export type AppliesTo = z.infer<typeof AppliesToSchema>;
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
