@@ -19,4 +19,11 @@ describe('loadRules', () => {
   it('throws on prerequisites referencing unknown rule ids', () => {
     expect(() => loadRules(join(FIX, 'rules-invalid'))).toThrow(/ghost-step/);
   });
+  it('throws with the offending file path on malformed YAML', () => {
+    expect(() => loadRules(join(FIX, 'rules-invalid'))).toThrow(/malformed\.yaml/);
+  });
+  it('throws on prerequisite cycles, naming the rules involved', () => {
+    expect(() => loadRules(join(FIX, 'rules-invalid'))).toThrow(/cycle/);
+    expect(() => loadRules(join(FIX, 'rules-invalid'))).toThrow(/cycle-a -> cycle-b -> cycle-a/);
+  });
 });

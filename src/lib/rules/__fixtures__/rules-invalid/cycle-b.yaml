@@ -1,0 +1,10 @@
+id: cycle-b
+type: roadmap_step
+title: Étape B
+phase: lancement
+prerequisites: [cycle-a]
+applies_to:
+  legal_forms: [micro]
+source_url: https://www.impots.gouv.fr/accueil
+verified_on: 2026-08-07
+valid_from: 2025-01-01

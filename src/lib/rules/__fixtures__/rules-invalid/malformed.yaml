@@ -1,0 +1,7 @@
+id: malformed
+type: threshold
+title: [unclosed flow sequence
+value: 100
+source_url: https://www.impots.gouv.fr/accueil
+verified_on: 2026-08-07
+valid_from: 2025-01-01
