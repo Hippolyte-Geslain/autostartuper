@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { appliesTo, activeOn } from './matcher';
-import { BusinessProfile } from './types';
+import { ThresholdSchema, type BusinessProfile, type Millesime } from './types';
 
 const profile: BusinessProfile = {
   legalForm: 'micro',
@@ -33,6 +33,9 @@ describe('appliesTo', () => {
   it('options_none excludes holders of the option', () => {
     expect(appliesTo({ options_none: ['acre'] }, profile)).toBe(false);
     expect(appliesTo({ options_none: ['versement-liberatoire'] }, profile)).toBe(true);
+    // Holding ANY listed option excludes, not all of them: options_none is a
+    // some(), and this profile holds only the first of the two.
+    expect(appliesTo({ options_none: ['acre', 'versement-liberatoire'] }, profile)).toBe(false);
   });
   it('all present conditions must hold together', () => {
     expect(appliesTo({ legal_forms: ['micro'], options_none: ['acre'] }, profile)).toBe(false);
@@ -41,7 +44,7 @@ describe('appliesTo', () => {
 });
 
 describe('activeOn (millésime)', () => {
-  const base: { valid_from: string; valid_until?: string } = { valid_from: '2025-01-01' };
+  const base: Millesime = { valid_from: '2025-01-01' };
   it('active from valid_from, no end', () => {
     expect(activeOn(base, '2026-08-07')).toBe(true);
     expect(activeOn(base, '2025-01-01')).toBe(true);
@@ -51,5 +54,24 @@ describe('activeOn (millésime)', () => {
     expect(activeOn({ ...base, valid_until: '2025-12-31' }, '2026-08-07')).toBe(false);
     expect(activeOn({ ...base, valid_until: '2026-12-31' }, '2026-08-07')).toBe(true);
     expect(activeOn({ ...base, valid_until: '2026-08-07' }, '2026-08-07')).toBe(true);
+  });
+
+  // The engine calls activeOn(rule, today) on whole parsed rules, never on a
+  // hand-built {valid_from, valid_until}. Pinned here so a future change to
+  // where rules carry their millésime breaks this test, not the engine.
+  it('accepts a whole parsed rule', () => {
+    const rule = ThresholdSchema.parse({
+      id: 'micro-bnc-threshold-2025',
+      title: 'Plafond micro-BNC',
+      source_url: 'https://entreprendre.service-public.fr/vosdroits/F00000',
+      verified_on: '2026-08-07',
+      valid_from: '2025-01-01',
+      valid_until: '2025-12-31',
+      applies_to: { legal_forms: ['micro'] },
+      type: 'threshold',
+      value: 77700,
+    });
+    expect(activeOn(rule, '2025-06-15')).toBe(true);
+    expect(activeOn(rule, '2026-08-07')).toBe(false);
   });
 });

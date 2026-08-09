@@ -314,6 +314,23 @@ describe('RuleSchema strictness', () => {
       RuleSchema.parse(threshold({ applies_to: { activity_categories: ['vente-bic'] } }))
     ).toThrow();
   });
+
+  // `[]` is never what an author means: an empty membership list matches
+  // nobody, an empty options list constrains nothing. Both fail silently, so
+  // the schema rejects them and points at the fix.
+  const emptyLists: Array<[Record<string, unknown>, string]> = [
+    [{ legal_forms: [] }, 'membership list'],
+    [{ options_all: [] }, 'options list'],
+  ];
+
+  it.each(emptyLists)('rejects the empty array in %j (%s)', (applies_to) => {
+    const issue = firstIssue(threshold({ applies_to }));
+    expect(issue.message).toMatch(/omit the field entirely/);
+  });
+
+  it('accepts applies_to with no conditions at all', () => {
+    expect(() => RuleSchema.parse(threshold({ applies_to: {} }))).not.toThrow();
+  });
 });
 
 describe('AppliesTo options vocabulary', () => {

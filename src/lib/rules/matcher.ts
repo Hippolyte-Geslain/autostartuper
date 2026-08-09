@@ -32,9 +32,11 @@ export function appliesTo(a: AppliesTo, p: BusinessProfile): boolean {
 /**
  * Whether a rule is in force on `date`.
  *
- * Rules carry a millésime — the year their figures come from — so successive
- * years' versions of the same rule can sit side by side in the YAML and the
- * engine picks the one covering the day it is asked about.
+ * Rules carry a millésime — the year their figures come from. Successive years
+ * are separate rules with distinct ids and non-overlapping windows. This
+ * predicate answers only whether one rule's window covers the day — it does not
+ * disambiguate. If two millésimes overlap, both pass and the engine surfaces
+ * both; keeping the windows disjoint is the rule author's job.
  *
  * Both bounds are inclusive: a rule is live on its `valid_from` and still live
  * on its `valid_until`, since that end date is the last day the rule applies,

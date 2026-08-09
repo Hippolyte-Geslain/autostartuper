@@ -19,12 +19,24 @@ export type ActivityCategory = z.infer<typeof ActivityCategorySchema>;
 export type LifecyclePhase = z.infer<typeof LifecyclePhaseSchema>;
 export type KnownOption = z.infer<typeof KnownOptionSchema>;
 
+/**
+ * An empty array is always an author mistake, so every list here needs at least
+ * one entry.
+ *
+ * The two failure modes differ but both are silent. An empty membership list
+ * (`legal_forms: []`) matches nobody, hiding the rule from every user; an empty
+ * options list is vacuous and constrains nothing. Neither is what someone
+ * writing `[]` means — they mean "no constraint", which is spelled by leaving
+ * the field out. Saying so in the message keeps the author from guessing.
+ */
+const NO_EMPTY_LIST = 'must list at least one value; omit the field entirely for "no constraint"';
+
 export const AppliesToSchema = z.strictObject({
-  legal_forms: z.array(LegalFormSchema).optional(),
-  activity_categories: z.array(ActivityCategorySchema).optional(),
-  lifecycle_phases: z.array(LifecyclePhaseSchema).optional(),
-  options_all: z.array(KnownOptionSchema).optional(),
-  options_none: z.array(KnownOptionSchema).optional(),
+  legal_forms: z.array(LegalFormSchema).min(1, NO_EMPTY_LIST).optional(),
+  activity_categories: z.array(ActivityCategorySchema).min(1, NO_EMPTY_LIST).optional(),
+  lifecycle_phases: z.array(LifecyclePhaseSchema).min(1, NO_EMPTY_LIST).optional(),
+  options_all: z.array(KnownOptionSchema).min(1, NO_EMPTY_LIST).optional(),
+  options_none: z.array(KnownOptionSchema).min(1, NO_EMPTY_LIST).optional(),
 });
 export type AppliesTo = z.infer<typeof AppliesToSchema>;
 
