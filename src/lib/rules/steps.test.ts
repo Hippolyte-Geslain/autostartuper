@@ -45,4 +45,14 @@ describe('pendingSteps', () => {
     const out = pendingSteps([step('a', 'lancement'), step('b', 'lancement', ['a'])], profile, ['b']);
     expect(out.map((s) => s.id)).toEqual(['a']);
   });
+  // Shallow on purpose: completing b is the user asserting the state b leaves
+  // them in, so c is released even though a is still outstanding.
+  it('checks direct prerequisites only, so a chain releases from the middle', () => {
+    const chain = [
+      step('a', 'lancement'),
+      step('b', 'lancement', ['a']),
+      step('c', 'lancement', ['b']),
+    ];
+    expect(pendingSteps(chain, profile, ['b']).map((s) => s.id)).toEqual(['a', 'c']);
+  });
 });
