@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { mkdtempSync } from 'node:fs';
+import { describe, it, expect, onTestFinished } from 'vitest';
+import { cpSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadRules, validateRuleGraph } from './loader';
@@ -54,6 +54,19 @@ describe('loadRules', () => {
 
   it('returns an empty array for a directory holding no rules', () => {
     expect(loadRules(mkdtempSync(join(tmpdir(), 'rules-empty-')))).toEqual([]);
+  });
+
+  it('does not descend into a directory link pointing back up the tree', (ctx) => {
+    const parent = mkdtempSync(join(tmpdir(), 'rules-link-'));
+    onTestFinished(() => rmSync(parent, { recursive: true, force: true }));
+    const dir = join(parent, 'rules');
+    cpSync(join(FIX, 'rules-valid'), join(dir, 'sub'), { recursive: true });
+    try {
+      symlinkSync(parent, join(dir, 'loop'), 'junction');
+    } catch {
+      return ctx.skip('this machine does not allow creating directory links');
+    }
+    expect(loadRules(dir)).toHaveLength(1); // no ELOOP, no runaway recursion
   });
 });
 

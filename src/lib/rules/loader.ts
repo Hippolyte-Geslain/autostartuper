@@ -78,6 +78,9 @@ export function validateRuleGraph(rules: LoadedRule[]): string[] {
   // One index answers both "was this id already used?" and "does this id
   // exist?", so there is no second lookup table to keep in step with it.
   const fileById = new Map<string, string>();
+  // Known and deliberate: on a duplicate id, `fileById` keeps the first file
+  // while `steps` keeps the last rule's prerequisites. Harmless, because a
+  // duplicate is itself an error, so the graph is never trusted on its own.
   const steps = new Map<string, readonly string[]>();
   for (const { file, rule } of rules) {
     const firstFile = fileById.get(rule.id);
