@@ -318,13 +318,17 @@ describe('RuleSchema strictness', () => {
   // `[]` is never what an author means: an empty membership list matches
   // nobody, an empty options list constrains nothing. Both fail silently, so
   // the schema rejects them and points at the fix.
-  const emptyLists: Array<[Record<string, unknown>, string]> = [
-    [{ legal_forms: [] }, 'membership list'],
-    [{ options_all: [] }, 'options list'],
+  const emptyLists: Array<[string, string]> = [
+    ['legal_forms', 'membership list'],
+    ['activity_categories', 'membership list'],
+    ['lifecycle_phases', 'membership list'],
+    ['options_all', 'options list'],
+    ['options_none', 'options list'],
   ];
 
-  it.each(emptyLists)('rejects the empty array in %j (%s)', (applies_to) => {
-    const issue = firstIssue(threshold({ applies_to }));
+  it.each(emptyLists)('rejects the empty array in %s (%s)', (field) => {
+    const issue = firstIssue(threshold({ applies_to: { [field]: [] } }));
+    expect(issue.path).toEqual(['applies_to', field]);
     expect(issue.message).toMatch(/omit the field entirely/);
   });
 
