@@ -2,7 +2,7 @@ import { describe, it, expect, onTestFinished } from 'vitest';
 import { cpSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadRules, validateRuleGraph } from './loader';
+import { loadRules, loadRulesWithFiles, validateRuleGraph } from './loader';
 import type { LoadedRule } from './loader';
 
 const FIX = join(__dirname, '__fixtures__');
@@ -53,7 +53,18 @@ describe('loadRules', () => {
   });
 
   it('returns an empty array for a directory holding no rules', () => {
-    expect(loadRules(mkdtempSync(join(tmpdir(), 'rules-empty-')))).toEqual([]);
+    const dir = mkdtempSync(join(tmpdir(), 'rules-empty-'));
+    onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
+    expect(loadRules(dir)).toEqual([]);
+  });
+
+  it('pairs each rule with the file it came from', () => {
+    expect(loadRulesWithFiles(join(FIX, 'rules-valid'))).toEqual([
+      {
+        file: join(FIX, 'rules-valid', 'ok-obligation.yaml'),
+        rule: expect.objectContaining({ id: 'ok-obligation' }),
+      },
+    ]);
   });
 
   it('does not descend into a directory link pointing back up the tree', (ctx) => {
@@ -66,7 +77,8 @@ describe('loadRules', () => {
     } catch {
       return ctx.skip('this machine does not allow creating directory links');
     }
-    expect(loadRules(dir)).toHaveLength(1); // no ELOOP, no runaway recursion
+    // No ELOOP, no runaway recursion, and the link itself is not read as a rule.
+    expect(loadRules(dir).map((rule) => rule.id)).toEqual(['ok-obligation']);
   });
 });
 

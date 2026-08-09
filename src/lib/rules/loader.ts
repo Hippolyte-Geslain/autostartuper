@@ -11,6 +11,14 @@ export interface LoadedRule {
 }
 
 /**
+ * Opening line of the error thrown for unsound rules.
+ *
+ * Exported so callers can tell a rule-authoring problem, which deserves a
+ * plain message, from a bug in the loader itself, which deserves a stack.
+ */
+export const INVALID_RULES_PREFIX = 'Invalid rules:';
+
+/**
  * Every file under `dir`, recursively, in a stable alphabetical order.
  *
  * Symlinked directories and Windows junctions are read as plain files rather
@@ -108,15 +116,19 @@ export function validateRuleGraph(rules: LoadedRule[]): string[] {
 }
 
 /**
- * Read every YAML rule under `dir` and validate it.
+ * Read every YAML rule under `dir` and validate it, keeping each rule paired
+ * with the file it came from.
  *
  * Nothing is returned unless the whole directory is sound. Problems are
  * collected and reported in a single error so a rule author fixes them all in
  * one pass instead of rerunning after each fix. Files are read, parsed and
  * schema-checked here; everything that depends on the other rules is left to
  * `validateRuleGraph`.
+ *
+ * Use this when a later message needs to name the offending file; use
+ * `loadRules` when only the rules matter.
  */
-export function loadRules(dir: string): Rule[] {
+export function loadRulesWithFiles(dir: string): LoadedRule[] {
   const files = walk(dir).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
   const loaded: LoadedRule[] = [];
   const errors: string[] = [];
@@ -154,7 +166,12 @@ export function loadRules(dir: string): Rule[] {
     // Bullet each problem and indent its continuation lines, so a multi-line
     // YAML parser complaint stays visibly part of one entry.
     const entries = errors.map((e) => `- ${e.replace(/\n/g, '\n  ')}`);
-    throw new Error(`Invalid rules:\n${entries.join('\n')}`);
+    throw new Error(`${INVALID_RULES_PREFIX}\n${entries.join('\n')}`);
   }
-  return loaded.map((l) => l.rule);
+  return loaded;
+}
+
+/** As `loadRulesWithFiles`, without the file each rule came from. */
+export function loadRules(dir: string): Rule[] {
+  return loadRulesWithFiles(dir).map((l) => l.rule);
 }
