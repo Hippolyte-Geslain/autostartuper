@@ -88,7 +88,7 @@ export function expandPeriodic(
  *
  * @returns the dues inside `[from, to]`, ascending, without duplicates. Both
  * ends of the window are inclusive.
- * @throws {RangeError} if the schedule is not a real month and day.
+ * @throws {RangeError} if `month` is outside 1-12, or `day` is below 1.
  * @throws {TypeError} if `from` or `to` is not `YYYY-MM-DD`.
  */
 export function expandAnnual(
