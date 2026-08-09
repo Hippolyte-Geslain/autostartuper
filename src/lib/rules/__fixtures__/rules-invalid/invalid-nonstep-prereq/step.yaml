@@ -1,0 +1,10 @@
+id: nonstep-step
+type: roadmap_step
+title: Étape qui attend un seuil
+phase: lancement
+prerequisites: [nonstep-seuil]
+applies_to:
+  legal_forms: [micro]
+source_url: https://www.impots.gouv.fr/accueil
+verified_on: 2026-08-07
+valid_from: 2025-01-01

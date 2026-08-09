@@ -1,0 +1,1 @@
+Not a rule file. The loader must skip it.

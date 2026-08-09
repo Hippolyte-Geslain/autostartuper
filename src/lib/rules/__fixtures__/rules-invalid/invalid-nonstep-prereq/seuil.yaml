@@ -1,0 +1,8 @@
+id: nonstep-seuil
+type: threshold
+title: Seuil de chiffre d'affaires
+applies_to: {}
+value: 77700
+source_url: https://www.impots.gouv.fr/accueil
+verified_on: 2026-08-07
+valid_from: 2025-01-01

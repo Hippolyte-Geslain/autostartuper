@@ -1,31 +1,47 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 import { RuleSchema } from './types';
 import type { Rule } from './types';
 
-/** Every file under `dir`, recursively, in a stable alphabetical order. */
+/** A parsed rule paired with the file it came from, so errors can point at it. */
+export interface LoadedRule {
+  file: string;
+  rule: Rule;
+}
+
+/**
+ * Every file under `dir`, recursively, in a stable alphabetical order.
+ *
+ * Symlinked directories and Windows junctions are read as plain files rather
+ * than descended into, because `Dirent.isDirectory()` is false for a link.
+ * A link pointing back up the tree therefore cannot send this into a loop.
+ */
 function walk(dir: string): string[] {
-  return readdirSync(dir)
-    .sort()
-    .flatMap((name) => {
-      const p = join(dir, name);
-      return statSync(p).isDirectory() ? walk(p) : [p];
+  return readdirSync(dir, { withFileTypes: true })
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    .flatMap((entry) => {
+      const path = join(dir, entry.name);
+      return entry.isDirectory() ? walk(path) : [path];
     });
 }
 
 /**
- * Every prerequisite cycle among roadmap steps, each as a readable path
+ * Prerequisite cycles among roadmap steps, each as a readable path
  * ("a -> b -> a"). A step naming itself is reported the same way.
  *
- * Only edges pointing at loaded steps are followed. Prerequisites that name a
- * missing rule, or a rule that is not a step, cannot take part in a cycle and
- * are reported by the dangling check instead, so skipping them here keeps this
- * walk from tripping over problems that are already covered.
+ * One error is reported per back edge, not per tangle: a knot of mutually
+ * reachable steps may yield a single line even though several orderings are
+ * broken. Fix what is reported and rerun to see the rest.
+ *
+ * Only edges pointing at loaded steps are followed. A prerequisite naming a
+ * missing rule, or one that is not a step, cannot take part in a cycle and is
+ * reported by `validateRuleGraph`, so skipping it here keeps this walk from
+ * tripping over a problem that is already covered.
  */
 function findPrerequisiteCycles(steps: Map<string, readonly string[]>): string[] {
   const cycles: string[] = [];
-  const settled = new Set<string>(); // fully explored, no cycle reachable from here
+  const settled = new Set<string>(); // fully explored, nothing broken below it
   const path: string[] = []; // the chain of steps currently being explored
   const onPath = new Set<string>();
 
@@ -50,17 +66,56 @@ function findPrerequisiteCycles(steps: Map<string, readonly string[]>): string[]
 }
 
 /**
+ * Check a set of already-parsed rules as a whole and return every problem
+ * found. An empty array means the set is sound.
+ *
+ * These are the checks no single file can make on its own: ids used twice,
+ * prerequisites naming something that cannot satisfy them, and cycles.
+ */
+export function validateRuleGraph(rules: LoadedRule[]): string[] {
+  const errors: string[] = [];
+
+  // One index answers both "was this id already used?" and "does this id
+  // exist?", so there is no second lookup table to keep in step with it.
+  const fileById = new Map<string, string>();
+  const steps = new Map<string, readonly string[]>();
+  for (const { file, rule } of rules) {
+    const firstFile = fileById.get(rule.id);
+    if (firstFile) errors.push(`duplicate rule id '${rule.id}': ${firstFile} and ${file}`);
+    else fileById.set(rule.id, file);
+    if (rule.type === 'roadmap_step') steps.set(rule.id, rule.prerequisites);
+  }
+
+  // A prerequisite must name a roadmap step. Only steps can be completed, so a
+  // prerequisite pointing at a threshold or an obligation is never satisfied
+  // and would silently hold its step back forever.
+  for (const { file, rule } of rules) {
+    if (rule.type !== 'roadmap_step') continue;
+    for (const prerequisite of rule.prerequisites) {
+      if (!fileById.has(prerequisite)) {
+        errors.push(`${file}: ${rule.id}: unknown prerequisite '${prerequisite}'`);
+      } else if (!steps.has(prerequisite)) {
+        errors.push(`${file}: ${rule.id}: prerequisite '${prerequisite}' is not a roadmap_step`);
+      }
+    }
+  }
+
+  errors.push(...findPrerequisiteCycles(steps));
+  return errors;
+}
+
+/**
  * Read every YAML rule under `dir` and validate it.
  *
  * Nothing is returned unless the whole directory is sound. Problems are
  * collected and reported in a single error so a rule author fixes them all in
- * one pass instead of rerunning after each fix. Four kinds are caught:
- * unparseable or schema-invalid files, ids used twice, roadmap steps whose
- * prerequisites name a rule that does not exist, and prerequisite cycles.
+ * one pass instead of rerunning after each fix. Files are read, parsed and
+ * schema-checked here; everything that depends on the other rules is left to
+ * `validateRuleGraph`.
  */
 export function loadRules(dir: string): Rule[] {
   const files = walk(dir).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
-  const rules: Rule[] = [];
+  const loaded: LoadedRule[] = [];
   const errors: string[] = [];
 
   for (const file of files) {
@@ -73,33 +128,30 @@ export function loadRules(dir: string): Rule[] {
       errors.push(`${file}: ${err instanceof Error ? err.message : String(err)}`);
       continue;
     }
-    const res = RuleSchema.safeParse(data);
-    if (res.success) {
-      rules.push(res.data);
+    // A blank or comment-only file parses to null. Say so plainly instead of
+    // letting the schema complain that it expected an object and got nothing.
+    if (data === null || data === undefined) {
+      errors.push(`${file}: file is empty`);
       continue;
     }
-    const detail = res.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+    const res = RuleSchema.safeParse(data);
+    if (res.success) {
+      loaded.push({ file, rule: res.data });
+      continue;
+    }
+    const detail = res.error.issues
+      .map((i) => (i.path.length ? `${i.path.join('.')}: ${i.message}` : i.message))
+      .join('; ');
     errors.push(`${file}: ${detail}`);
   }
 
-  const seen = new Set<string>();
-  for (const r of rules) {
-    if (seen.has(r.id)) errors.push(`duplicate rule id: ${r.id}`);
-    seen.add(r.id);
-  }
+  errors.push(...validateRuleGraph(loaded));
 
-  // Referential integrity: every prerequisite must name a loaded rule id.
-  const ids = new Set(rules.map((r) => r.id));
-  const steps = new Map<string, readonly string[]>();
-  for (const r of rules) {
-    if (r.type !== 'roadmap_step') continue;
-    steps.set(r.id, r.prerequisites);
-    for (const p of r.prerequisites) {
-      if (!ids.has(p)) errors.push(`${r.id}: unknown prerequisite '${p}'`);
-    }
+  if (errors.length) {
+    // Bullet each problem and indent its continuation lines, so a multi-line
+    // YAML parser complaint stays visibly part of one entry.
+    const entries = errors.map((e) => `- ${e.replace(/\n/g, '\n  ')}`);
+    throw new Error(`Invalid rules:\n${entries.join('\n')}`);
   }
-  errors.push(...findPrerequisiteCycles(steps));
-
-  if (errors.length) throw new Error(`Invalid rules:\n${errors.join('\n')}`);
-  return rules;
+  return loaded.map((l) => l.rule);
 }

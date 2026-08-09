@@ -1,0 +1,8 @@
+id: nested-c
+type: threshold
+title: Seuil deux niveaux plus bas
+applies_to: {}
+value: 15000
+source_url: https://www.impots.gouv.fr/accueil
+verified_on: 2026-08-07
+valid_from: 2025-01-01

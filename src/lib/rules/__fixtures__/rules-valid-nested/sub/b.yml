@@ -1,0 +1,8 @@
+id: nested-b
+type: threshold
+title: Seuil en sous-dossier, extension yml
+applies_to: {}
+value: 188700
+source_url: https://www.impots.gouv.fr/accueil
+verified_on: 2026-08-07
+valid_from: 2025-01-01
