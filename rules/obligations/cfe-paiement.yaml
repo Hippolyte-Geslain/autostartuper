@@ -1,0 +1,15 @@
+# Due every 15 December (the following business day when the 15th is a weekend).
+# Businesses owing more than 3 000 € also pay an acompte on 15 June; the 15
+# December date is the one every business shares, so it is the one modelled here.
+# No applies_to constraint: the CFE is owed whatever the legal form.
+id: cfe-paiement
+type: obligation
+title: "Payer votre cotisation foncière des entreprises (CFE)"
+applies_to: {}
+schedule:
+  kind: annual
+  month: 12
+  day: 15
+source_url: https://www.impots.gouv.fr/professionnel/questions/comment-puis-je-acceder-mon-avis-de-cfe-et-le-payer
+verified_on: 2026-08-09
+valid_from: 2025-01-01

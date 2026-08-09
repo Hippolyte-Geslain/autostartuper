@@ -1,0 +1,11 @@
+# Not every activity must be insured, but several regulated ones must (bâtiment,
+# santé, transport...). The step is to check, and the fiche says for whom.
+id: assurance-rc-pro
+type: roadmap_step
+title: "Vérifier vos obligations d'assurance professionnelle (RC pro)"
+phase: lancement
+applies_to:
+  legal_forms: [micro]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F23668
+verified_on: 2026-08-09
+valid_from: 2025-01-01

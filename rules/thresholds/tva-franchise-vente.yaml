@@ -1,0 +1,14 @@
+# Base threshold. Past it you start charging VAT; the tolerance (seuil majoré)
+# of 93 500 € buys you the rest of the year, and passing that ends the franchise
+# on the spot. The single 25 000 € threshold voted in the 2025 finance law was
+# repealed by law 2025-1044 of 3 November 2025, so these amounts still stand.
+id: tva-franchise-vente
+type: threshold
+title: "Seuil de franchise en base de TVA — vente de marchandises et hébergement"
+value: 85000
+applies_to:
+  legal_forms: [micro]
+  activity_categories: [vente]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F21746
+verified_on: 2026-08-09
+valid_from: 2025-01-01

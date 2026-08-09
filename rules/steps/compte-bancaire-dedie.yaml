@@ -1,0 +1,11 @@
+# Mandatory once turnover passes 10 000 € two years running; recommended before
+# that. The title stays an action; the fiche carries the condition.
+id: compte-bancaire-dedie
+type: roadmap_step
+title: "Ouvrir un compte bancaire dédié à votre activité"
+phase: lancement
+applies_to:
+  legal_forms: [micro]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F35991
+verified_on: 2026-08-09
+valid_from: 2025-01-01

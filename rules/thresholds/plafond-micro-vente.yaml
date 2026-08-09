@@ -1,0 +1,14 @@
+# Millésime 2026-2028: revalued from 188 700 € (2023-2025) to 203 100 €.
+# Leaving the regime needs the ceiling passed two years running, so this value
+# is a warning line, not a cliff.
+id: plafond-micro-vente
+type: threshold
+title: "Plafond de chiffre d'affaires du régime micro — vente de marchandises"
+value: 203100
+applies_to:
+  legal_forms: [micro]
+  activity_categories: [vente]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F32353
+verified_on: 2026-08-09
+valid_from: 2026-01-01
+valid_until: 2028-12-31

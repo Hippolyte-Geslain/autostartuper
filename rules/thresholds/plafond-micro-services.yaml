@@ -1,0 +1,13 @@
+# Millésime 2026-2028: revalued from 77 700 € (2023-2025) to 83 600 €.
+# One ceiling covers both BIC and BNC services, so both categories point here.
+id: plafond-micro-services
+type: threshold
+title: "Plafond de chiffre d'affaires du régime micro — prestations de services"
+value: 83600
+applies_to:
+  legal_forms: [micro]
+  activity_categories: [service-bic, service-bnc]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F32353
+verified_on: 2026-08-09
+valid_from: 2026-01-01
+valid_until: 2028-12-31

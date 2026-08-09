@@ -1,0 +1,13 @@
+# Frequency is deliberately omitted: the engine reads it from the profile,
+# because the micro-entrepreneur chooses monthly or quarterly at registration.
+# Either way the declaration is due at the end of the month following the period.
+id: urssaf-declaration-micro
+type: obligation
+title: "Déclarer votre chiffre d'affaires à l'Urssaf"
+applies_to:
+  legal_forms: [micro]
+schedule:
+  kind: periodic
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F23257
+verified_on: 2026-08-09
+valid_from: 2025-01-01
