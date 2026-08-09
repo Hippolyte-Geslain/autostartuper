@@ -14,6 +14,8 @@
 
 **Amendments during execution (Task 2 review):** the schema contract in `src/lib/rules/types.ts` is stricter than the snippets below — source URLs must be **https** on official domains (`OFFICIAL_SUFFIXES` exported); dates are calendar-validated (`IsoDateSchema` exported; `Millesime` type exported for Task 6); `valid_until >= valid_from` enforced; rule `id` must match `/^[a-z0-9-]+$/`; `options_all`/`options_none` use the closed `KnownOptionSchema` enum (`acre`, `versement-liberatoire`); all rule/schedule objects are strictObject (unknown keys reject); `warn_ratio` is exclusive (0,1). Deferred hardening: prerequisite referential integrity → Task 3 loader; `verified_on` not-in-future + staleness warning → Task 4 script. All plan YAML/fixtures already conform.
 
+**Amendments (Task 4 review):** `validate-rules` grew beyond the two-line plan version: `--min <n>` count guard (space and equals forms, unknown args rejected, `--help`), future-`verified_on` errors and 183-day staleness warnings (pure logic in `src/lib/rules/freshness.ts`, tested; "stale after 183 days" — exactly 183 does not warn), file-named errors via `loadRulesWithFiles`, stale warnings printed even alongside hard failures, `::warning::` annotations under GitHub Actions, local-date `today`, cwd-independent rules path. CI (Task 10) must call `npm run validate:rules -- --min 9`.
+
 **Amendments (Task 3 review):** loader collects ALL problems in one throw (schema, malformed YAML per-file with path, duplicates naming both files, dangling prerequisites, prerequisite cycles via DFS); prerequisites must reference **roadmap_step ids only** (a prereq naming a threshold/obligation id is an error — non-step prereqs could never complete and would silently hide steps); graph checks live in exported `validateRuleGraph()`; `walk` does not follow symlinks/junctions. Task 4 note: `validate-rules` should assert a minimum rule count once Task 8 seeds real rules (empty-dir green is only acceptable while `rules/` is empty) and add `verified_on` not-in-future + staleness warnings.
 
 ---
@@ -1258,7 +1260,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run validate:rules
+      - run: npm run validate:rules -- --min 9
       - run: npm test
 ```
 
