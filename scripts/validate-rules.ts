@@ -33,7 +33,7 @@ export class UsageError extends Error {}
 export function minimumFrom(args: string[]): number | 'help' {
   if (args.includes('--help') || args.includes('-h')) return 'help';
 
-  let minimum = 0;
+  let minimum: number | undefined;
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     let raw: string | undefined;
@@ -45,6 +45,9 @@ export function minimumFrom(args: string[]): number | 'help' {
     } else {
       throw new UsageError(`unknown argument '${arg}'`);
     }
+    // Two --min values are two different intentions. Letting one quietly win
+    // is the same guess this parser refuses to make everywhere else.
+    if (minimum !== undefined) throw new UsageError('--min given more than once');
     // Number('') is 0 and Number(undefined) is NaN. Neither is a number anyone
     // typed, so both have to be caught before the range check.
     const value = Number(raw);
@@ -53,7 +56,7 @@ export function minimumFrom(args: string[]): number | 'help' {
     }
     minimum = value;
   }
-  return minimum;
+  return minimum ?? 0;
 }
 
 /** Names a rule the way an author can find it again. */

@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { minimumFrom, UsageError } from './validate-rules';
 
 describe('minimumFrom', () => {
@@ -34,6 +36,12 @@ describe('minimumFrom', () => {
     expect(() => minimumFrom(['--min'])).toThrow(UsageError);
   });
 
+  it('refuses a repeated --min rather than picking a winner', () => {
+    expect(() => minimumFrom(['--min', '9', '--min', '3'])).toThrow('--min given more than once');
+    expect(() => minimumFrom(['--min=9', '--min=3'])).toThrow(UsageError);
+    expect(() => minimumFrom(['--min', '9', '--min=9'])).toThrow(UsageError);
+  });
+
   it('refuses an empty value', () => {
     // Number('') is 0, which would silently disable the check.
     expect(() => minimumFrom(['--min', ''])).toThrow(UsageError);
@@ -48,5 +56,24 @@ describe('minimumFrom', () => {
 
   it('does not mistake a negative value for another argument', () => {
     expect(() => minimumFrom(['--min', '-1'])).toThrow("got '-1'");
+  });
+});
+
+describe('the script as CI runs it', () => {
+  const SCRIPT = fileURLToPath(new URL('./validate-rules.ts', import.meta.url));
+
+  // Every other test here imports the module, which deliberately does nothing
+  // on import. Only spawning it proves the entry point still fires at all: if
+  // the guard around it ever stops matching the runtime, this is what notices.
+  it('fails the build and says why', { timeout: 120_000 }, () => {
+    // One command string rather than an args array: with `shell` the two are
+    // equivalent, but the array form is deprecated (DEP0190) and would print a
+    // warning on every CI run.
+    const result = spawnSync(`npx tsx "${SCRIPT}" --min 999999`, {
+      shell: true,
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('too few rules');
   });
 });
