@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ISO_DATE } from './dates';
 import { isOfficialSource, OFFICIAL_SUFFIXES } from './sources';
 
 export const LegalFormSchema = z.enum(['micro', 'ei', 'eurl', 'sasu']);
@@ -27,8 +28,6 @@ export const AppliesToSchema = z.strictObject({
 });
 export type AppliesTo = z.infer<typeof AppliesToSchema>;
 
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
 /** True only for a date that exists on the calendar (rejects 2026-02-30, 2025-13-45). */
 function isRealCalendarDate(value: string): boolean {
   const [year, month, day] = value.split('-').map(Number);
@@ -42,9 +41,12 @@ function isRealCalendarDate(value: string): boolean {
  * A calendar-real date in YYYY-MM-DD form.
  * Checks run in sequence and stop at the first failure, so a malformed date
  * reports only the format problem instead of piling on a calendar complaint.
+ *
+ * The shape check reuses `dates.ts`'s `ISO_DATE`, so what the schema accepts and
+ * what the date helpers accept cannot drift apart.
  */
 export const IsoDateSchema = z.string().superRefine((value, ctx) => {
-  if (!ISO_DATE_PATTERN.test(value)) {
+  if (!ISO_DATE.test(value)) {
     ctx.addIssue({ code: 'custom', message: 'expected YYYY-MM-DD' });
     return;
   }

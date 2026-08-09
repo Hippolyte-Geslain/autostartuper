@@ -1,4 +1,4 @@
-import { addDays } from './dates';
+import { addDays, type ISODate } from './dates';
 import type { LoadedRule } from './loader';
 
 /**
@@ -15,7 +15,7 @@ export const STALE_AFTER_DAYS = 183;
  * Nobody can have checked a source in the future, so this is a false claim
  * rather than a rule that has merely aged, and callers treat it as an error.
  */
-export function futureVerifications(rules: readonly LoadedRule[], today: string): LoadedRule[] {
+export function futureVerifications(rules: readonly LoadedRule[], today: ISODate): LoadedRule[] {
   return rules.filter(({ rule }) => rule.verified_on > today);
 }
 
@@ -25,11 +25,8 @@ export function futureVerifications(rules: readonly LoadedRule[], today: string)
  * Being stale is not being wrong: the rule may well still hold. It means
  * nobody has re-read the official source lately, so callers warn instead of
  * failing. A future verification is never stale.
- *
- * The cutoff is counted in UTC, so a daylight-saving change cannot move it by
- * a day.
  */
-export function staleVerifications(rules: readonly LoadedRule[], today: string): LoadedRule[] {
+export function staleVerifications(rules: readonly LoadedRule[], today: ISODate): LoadedRule[] {
   const cutoff = addDays(today, -STALE_AFTER_DAYS);
   return rules.filter(({ rule }) => rule.verified_on < cutoff);
 }

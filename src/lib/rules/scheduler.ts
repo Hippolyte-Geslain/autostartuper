@@ -1,12 +1,27 @@
 /**
  * Turns a rule's schedule into the concrete days it falls due inside a window.
  *
- * Both windows are inclusive on each end, and every returned day is in order.
+ * The window is one closed range: a due landing on `from` or on `to` counts.
+ * Malformed input throws rather than returning something plausible — see the
+ * contract at the top of `./dates`.
  */
 import { type ISODate, parseISO, toISO, lastDayOfMonth, cmp } from './dates';
+import type { UrssafFrequency } from './types';
 
-/** Every `{ y, m }` from one month to another, inclusive of both. */
-function* monthsBetween(fromY: number, fromM: number, toY: number, toM: number) {
+/**
+ * Every `{ y, m }` from one month to another, inclusive of both.
+ *
+ * Yields nothing if a bound is not a whole number. `m` is what advances the
+ * loop, so a `NaN` bound would leave `y` frozen and spin forever; callers are
+ * already guarded by `parseISO`, and this makes that impossible to regress.
+ */
+function* monthsBetween(
+  fromY: number,
+  fromM: number,
+  toY: number,
+  toM: number
+): Generator<{ y: number; m: number }> {
+  if (![fromY, fromM, toY, toM].every(Number.isInteger)) return;
   let y = fromY;
   let m = fromM;
   while (y < toY || (y === toY && m <= toM)) {
@@ -24,18 +39,24 @@ function* monthsBetween(fromY: number, fromM: number, toY: number, toM: number) 
  * period end. A monthly period ending in August is due 30 September; a
  * quarterly one ending in September is due 31 October.
  *
- * Only quarter-end months (March, June, September, December) start a quarterly
- * period's countdown, so a quarterly schedule yields at most one due per quarter.
+ * Only quarter-end months (March, June, September, December) close a quarterly
+ * period, so a quarterly schedule yields at most one due per quarter.
+ *
+ * @returns the dues inside `[from, to]`, ascending, without duplicates. Both
+ * ends of the window are inclusive.
+ * @throws {TypeError} if `from` or `to` is not `YYYY-MM-DD`.
  */
 export function expandPeriodic(
-  freq: 'monthly' | 'quarterly',
+  freq: UrssafFrequency,
   from: ISODate,
-  to: ISODate,
+  to: ISODate
 ): ISODate[] {
   const f = parseISO(from);
   const t = parseISO(to);
-  // Look back 2 months so dues falling shortly after `from` are not missed:
-  // a due on `from` itself belongs to the period one month earlier.
+  // A period in month m is due in month m+1, so the earliest period that can
+  // land in the window is from.m - 1. We start one month earlier still, as
+  // margin: the extra month can only produce a due before `from`, which the
+  // window filter below drops.
   let startY = f.y;
   let startM = f.m - 2;
   while (startM < 1) {
@@ -60,15 +81,28 @@ export function expandPeriodic(
 /**
  * Dues for a yearly obligation, such as the CFE on 15 December.
  *
- * `day` is clamped to the length of the month, which only ever matters for a
- * 29 February schedule in a non-leap year: it falls due on 28 February.
+ * Takes the schedule whole rather than as two loose numbers, so a caller cannot
+ * silently swap the month and the day. `day` is clamped to the length of the
+ * month, which only ever matters for a 29 February schedule in a non-leap year:
+ * it falls due on 28 February.
+ *
+ * @returns the dues inside `[from, to]`, ascending, without duplicates. Both
+ * ends of the window are inclusive.
+ * @throws {RangeError} if the schedule is not a real month and day.
+ * @throws {TypeError} if `from` or `to` is not `YYYY-MM-DD`.
  */
 export function expandAnnual(
-  month: number,
-  day: number,
+  schedule: { month: number; day: number },
   from: ISODate,
-  to: ISODate,
+  to: ISODate
 ): ISODate[] {
+  const { month, day } = schedule;
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new RangeError(`schedule month must be 1-12, got ${month}`);
+  }
+  if (!Number.isInteger(day) || day < 1) {
+    throw new RangeError(`schedule day must be 1 or more, got ${day}`);
+  }
   const out: ISODate[] = [];
   for (let y = parseISO(from).y; y <= parseISO(to).y; y++) {
     const d = toISO(y, month, Math.min(day, lastDayOfMonth(y, month)));
