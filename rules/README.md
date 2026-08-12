@@ -5,7 +5,7 @@ law that the app will repeat to a user as an instruction. Treat it that way: a
 wrong value here becomes a wrong action on someone's dashboard, and they have no
 way to tell.
 
-The gate is `npm run validate:rules -- --min 11`. It runs in CI and it checks the
+The gate is `npm run validate:rules -- --min 14`. It runs in CI and it checks the
 schema, not the truth. The truth is on you.
 
 ## Layout
@@ -107,7 +107,7 @@ that check before the first prerequisite is authored.
 ## Before you commit
 
 ```bash
-npm run validate:rules -- --min 11
+npm run validate:rules -- --min 14
 ```
 
 and bump `--min` when you add a rule, in this file's sibling

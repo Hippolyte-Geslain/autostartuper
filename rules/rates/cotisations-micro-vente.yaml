@@ -1,0 +1,19 @@
+# Micro-social 2026: cotisations are a flat percentage of turnover collected,
+# with no deduction of real costs. Vente de marchandises et fourniture
+# d'hébergement, EXCEPT furnished tourist accommodation (6 % when classé) and
+# furnished housing rental, which fall under the services BIC rate.
+# ACRE lowers this rate in the first period; the app does not compute the
+# reduced rate yet, so a profile holding the acre option must be told the figure
+# is the full rate. Modelled in the preparer, not here.
+id: cotisations-micro-vente
+type: rate
+title: "Cotisations sociales du micro-entrepreneur — vente de marchandises"
+percent: 12.3
+basis: turnover
+applies_to:
+  legal_forms: [micro]
+  activity_categories: [vente]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F37353
+verified_on: 2026-08-12
+valid_from: 2026-01-01
+valid_until: 2026-12-31

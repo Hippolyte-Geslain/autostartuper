@@ -12,18 +12,29 @@ import type { ActionInstance } from '@/lib/rules/engine';
 import type { DashboardModel } from '@/lib/dashboard/view';
 import { PHASE_ORDER, PHASE_LABELS, formatCountdown, daysUntil } from '@/lib/dashboard/view';
 import type { ParsedBusinessProfile } from '@/lib/profile/schema';
+import type { PreparedPayload } from '@/lib/prepare/preparer';
+import { actionKey } from '@/lib/prepare/preparer';
 import { Badge, Button, Card, SourceLink, formatDate, formatEuros } from './ui';
 
 interface Props {
   profile: ParsedBusinessProfile;
   model: DashboardModel;
+  prepared: Record<string, PreparedPayload>;
   today: string;
   completedStepIds: string[];
   onToggleStep: (id: string) => void;
   onRestart: () => void;
 }
 
-export function Dashboard({ profile, model, today, completedStepIds, onToggleStep, onRestart }: Props) {
+export function Dashboard({
+  profile,
+  model,
+  prepared,
+  today,
+  completedStepIds,
+  onToggleStep,
+  onRestart,
+}: Props) {
   const [view, setView] = useState(model.view);
   const [focused, setFocused] = useState<ActionInstance | null>(null);
 
@@ -54,7 +65,13 @@ export function Dashboard({ profile, model, today, completedStepIds, onToggleSte
       </header>
 
       {focused ? (
-        <FocusCard action={focused} onClose={() => setFocused(null)} onToggleStep={onToggleStep} completed={completedStepIds.includes(focused.id)} />
+        <FocusCard
+          action={focused}
+          payload={prepared[actionKey(focused)]}
+          onClose={() => setFocused(null)}
+          onToggleStep={onToggleStep}
+          completed={completedStepIds.includes(focused.id)}
+        />
       ) : view === 'parcours' ? (
         <Parcours
           profile={profile}
@@ -295,20 +312,21 @@ function ObligationRow({
 }
 
 /**
- * View C — one action, full screen.
+ * View C — one action, full screen, with everything the app prepared for it.
  *
- * v1 shows what the action is, when it is due and where the official page is.
- * The prepared payload the spec promises (pre-filled documents, pre-computed
- * amounts) is the M3 preparer; until it exists this card says what it knows and
- * does not pretend to more.
+ * The order is the point: what it is, then your figures, then the steps, then
+ * the caveats, then the link out. A user should be able to work top to bottom
+ * and be done.
  */
 function FocusCard({
   action,
+  payload,
   completed,
   onClose,
   onToggleStep,
 }: {
   action: ActionInstance;
+  payload?: PreparedPayload;
   completed: boolean;
   onClose: () => void;
   onToggleStep: (id: string) => void;
@@ -326,14 +344,41 @@ function FocusCard({
             À faire pour le <strong>{formatDate(action.dueDate)}</strong>.
           </p>
         )}
-        {action.type === 'threshold-alert' && (
-          <p className="mt-3 text-sm">
-            Vous êtes à {formatEuros(action.ytd)} sur un plafond de {formatEuros(action.limit)}.
+        {payload && <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{payload.summary}</p>}
+
+        {payload && payload.fields.length > 0 && (
+          <dl className="mt-6 grid gap-4 rounded-lg bg-zinc-50 p-4 sm:grid-cols-2 dark:bg-zinc-800/50">
+            {payload.fields.map((f) => (
+              <div key={f.label}>
+                <dt className="text-xs uppercase tracking-wide text-zinc-500">{f.label}</dt>
+                <dd className="text-lg font-semibold">{f.value}</dd>
+                {f.note && <p className="mt-1 text-xs text-zinc-500">{f.note}</p>}
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {payload && payload.checklist.length > 0 && (
+          <ol className="mt-6 flex flex-col gap-2 text-sm">
+            {payload.checklist.map((item, i) => (
+              <li key={item} className="flex gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium dark:bg-zinc-700">
+                  {i + 1}
+                </span>
+                {item}
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {payload?.caveats.map((caveat) => (
+          <p
+            key={caveat}
+            className="mt-4 rounded-lg border-l-2 border-amber-500 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            {caveat}
           </p>
-        )}
-        {action.type === 'step' && (
-          <p className="mt-3 text-sm">Une démarche à faire une fois, à votre rythme.</p>
-        )}
+        ))}
 
         <div className="mt-6 flex flex-wrap gap-2">
           <a
@@ -352,8 +397,8 @@ function FocusCard({
         </div>
 
         <p className="mt-6 text-xs text-zinc-500">
-          Le document pré-rempli arrive dans une prochaine version. Pour l’instant, l’app vous dit
-          quoi faire, quand, et vous emmène au bon endroit.
+          Les montants sont calculés à partir de vos chiffres et des taux officiels. L’app ne
+          transmet rien à votre place : vous validez sur le site officiel.
         </p>
       </Card>
     </div>

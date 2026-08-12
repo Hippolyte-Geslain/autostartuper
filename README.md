@@ -10,9 +10,10 @@ working out which of them apply to *you*, this month, is a research project.
 AutoStartUper does that research once, from official sources, and turns it into a short
 list: what to do, when, and a link to the government page that says so.
 
-> **Status:** working end to end, local-only. The rules engine (M1) and the assessment +
-> dashboard (M2) are done and tested. No account, no database, no API keys — your profile
-> lives in your browser. See [Roadmap](#roadmap).
+> **Status:** working end to end, local-only. The rules engine (M1), the assessment and
+> dashboards (M2), and the preparer that fills in your figures (M3) are done and tested —
+> 338 tests. No account, no database, no API keys: your profile lives in your browser.
+> See [Roadmap](#roadmap).
 
 ---
 
@@ -33,6 +34,9 @@ That constraint is what makes the rest of the design fall out:
   answer a question with citations. It never decides what you owe.
 - **Nothing is submitted for you.** The app prepares; you validate on the official site.
   Legal liability stays where it belongs.
+- **Never a bare alert.** "URSSAF declaration due 31 October" is not help. The period it
+  covers, the turnover to declare, the rate, the amount, and what the app could *not* work
+  out — that is help.
 
 ## Try it
 
@@ -53,7 +57,7 @@ npm test
 ```
 
 ```bash
-npm run validate:rules -- --min 11
+npm run validate:rules -- --min 14
 ```
 
 The second one is the truth gate, and it is what CI runs first: it is the only check that
@@ -71,10 +75,11 @@ rules/*.yaml  ──►  loader ──►  engine  ──►  actions  ──►
 
 | Layer | Where | What it does |
 |---|---|---|
-| Truth | [`rules/`](rules/) | One YAML file per rule: obligations, thresholds, roadmap steps |
+| Truth | [`rules/`](rules/) | One YAML file per rule: obligations, thresholds, roadmap steps, rates |
 | Engine | [`src/lib/rules/`](src/lib/rules/) | Matching, scheduling, threshold arithmetic, ordering |
 | Profile | [`src/lib/profile/`](src/lib/profile/) | Runtime schemas, lifecycle phase, persistence |
 | Assessment | [`src/lib/assessment/`](src/lib/assessment/) | The questions, as data rather than as screens |
+| Preparer | [`src/lib/prepare/`](src/lib/prepare/) | Turns an action into figures, a checklist and caveats |
 | App | [`src/app/`](src/app/), [`src/components/`](src/components/) | Next.js; three views: Parcours, Pilotage, Focus |
 
 Two rules of thumb hold the whole thing together:
@@ -194,8 +199,8 @@ be a scored comparison or a decision tree.
 | M1 | Rules engine, schemas, loader, CI | done |
 | M2 | Assessment (SIREN + wizard), dashboards, local profile | done, except auth |
 | M2.5 | Auth + persistence (Supabase, EU region) | blocked — needs credentials |
-| M3 | The preparer: pre-filled documents and computed amounts | next |
-| M4 | Notifications: J-30 / J-7 / J-1, email and web push | planned |
+| M3 | The preparer: computed amounts, checklists, caveats | done for URSSAF, CFE, thresholds |
+| M4 | Notifications: J-30 / J-7 / J-1, email and web push | next |
 | M5 | AI edges: document parsing, grounded Q&A over service-public data | planned |
 | M6 | Truth watchdog: weekly source diff, staleness alerts | planned |
 

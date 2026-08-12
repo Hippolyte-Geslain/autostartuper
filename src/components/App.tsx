@@ -23,12 +23,14 @@ import {
   clearProfile,
 } from '@/lib/profile/storage';
 import type { DashboardModel } from '@/lib/dashboard/view';
+import type { PreparedPayload } from '@/lib/prepare/preparer';
 import { AssessmentWizard } from './AssessmentWizard';
 import { Dashboard } from './Dashboard';
 import { Button, Card } from './ui';
 
 interface Computed {
   model: DashboardModel;
+  prepared: Record<string, PreparedPayload>;
   today: string;
 }
 
@@ -71,7 +73,7 @@ export function App() {
           setFailed(true);
           return;
         }
-        setComputed({ model: body.dashboard, today: body.today });
+        setComputed({ model: body.dashboard, prepared: body.prepared ?? {}, today: body.today });
         setFailed(false);
       } catch {
         if (!cancelled) setFailed(true);
@@ -130,6 +132,7 @@ export function App() {
     <Dashboard
       profile={profile}
       model={computed.model}
+      prepared={computed.prepared}
       today={computed.today}
       completedStepIds={completedStepIds}
       onToggleStep={onToggleStep}

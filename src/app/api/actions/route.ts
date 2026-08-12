@@ -13,6 +13,7 @@ import { computeActions } from '@/lib/rules/engine';
 import { loadRules } from '@/lib/rules/loader';
 import { BusinessProfileSchema } from '@/lib/profile/schema';
 import { buildDashboard } from '@/lib/dashboard/view';
+import { prepare, actionKey, type PreparedPayload } from '@/lib/prepare/preparer';
 import { ISO_DATE } from '@/lib/rules/dates';
 import type { Rule } from '@/lib/rules/types';
 
@@ -82,10 +83,19 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, reason: 'rules-unavailable' }, { status: 500 });
   }
 
+  // Payloads are computed here rather than on demand: they need the rules,
+  // which never leave the server, and preparing all of them costs one pass over
+  // a list that is already short.
+  const prepared: Record<string, PreparedPayload> = {};
+  for (const action of actions) {
+    prepared[actionKey(action)] = prepare(action, parsed.data, rules(), today);
+  }
+
   return Response.json({
     ok: true,
     today,
     actions,
+    prepared,
     dashboard: buildDashboard(actions, parsed.data.lifecyclePhase, today),
   });
 }

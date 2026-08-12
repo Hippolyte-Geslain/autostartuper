@@ -1,0 +1,17 @@
+# Micro-social 2026: professions libérales NON réglementées, hors Cipav.
+# The fiche gives a second rate for those affiliated to the Cipav (23,2 %), a
+# distinction the profile cannot make in v1 — the schema has no Cipav flag, and
+# guessing from an APE code is not reliable. The preparer therefore names the
+# Cipav rate in its caveat rather than silently applying the wrong one.
+id: cotisations-micro-service-bnc
+type: rate
+title: "Cotisations sociales du micro-entrepreneur — profession libérale non réglementée (hors Cipav)"
+percent: 25.6
+basis: turnover
+applies_to:
+  legal_forms: [micro]
+  activity_categories: [service-bnc]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F37353
+verified_on: 2026-08-12
+valid_from: 2026-01-01
+valid_until: 2026-12-31

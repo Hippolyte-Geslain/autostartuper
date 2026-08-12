@@ -130,6 +130,24 @@ export const ThresholdSchema = z.strictObject({
   value: z.number().positive(),
   warn_ratio: z.number().gt(0).lt(1).default(0.8),
 });
+/**
+ * A percentage the app computes with, such as a micro-social cotisation rate.
+ *
+ * Deliberately its own type rather than a `threshold` holding 21.2: a threshold
+ * means "compare turnover against this", and a rate that slipped into that type
+ * would produce a ratio of turnover over 21.2 — an alert claiming the user is
+ * 340 000 % over a ceiling. Different meaning, different type, and the engine
+ * ignores this one entirely: only the preparer reads rates.
+ */
+export const RateSchema = z.strictObject({
+  ...ruleBase,
+  type: z.literal('rate'),
+  /** Percent, so 21.2 means 21.2 % — the way the fiches write it. */
+  percent: z.number().gt(0).lte(100),
+  /** What the percentage is applied to. Only turnover for now. */
+  basis: z.literal('turnover'),
+});
+
 export const RoadmapStepSchema = z.strictObject({
   ...ruleBase,
   type: z.literal('roadmap_step'),
@@ -138,7 +156,7 @@ export const RoadmapStepSchema = z.strictObject({
 });
 
 export const RuleSchema = z
-  .discriminatedUnion('type', [ObligationSchema, ThresholdSchema, RoadmapStepSchema])
+  .discriminatedUnion('type', [ObligationSchema, ThresholdSchema, RoadmapStepSchema, RateSchema])
   .refine((r) => !r.valid_until || r.valid_until >= r.valid_from, {
     path: ['valid_until'],
     message: 'valid_until must be on or after valid_from',
@@ -147,6 +165,7 @@ export const RuleSchema = z
 export type ObligationRule = z.infer<typeof ObligationSchema>;
 export type ThresholdRule = z.infer<typeof ThresholdSchema>;
 export type RoadmapStepRule = z.infer<typeof RoadmapStepSchema>;
+export type RateRule = z.infer<typeof RateSchema>;
 export type Rule = z.infer<typeof RuleSchema>;
 
 export type UrssafFrequency = 'monthly' | 'quarterly';
