@@ -11,9 +11,9 @@ AutoStartUper does that research once, from official sources, and turns it into 
 list: what to do, when, and a link to the government page that says so.
 
 > **Status:** working end to end, local-only. The rules engine (M1), the assessment and
-> dashboards (M2), and the preparer that fills in your figures (M3) are done and tested —
-> 338 tests. No account, no database, no API keys: your profile lives in your browser.
-> See [Roadmap](#roadmap).
+> dashboards (M2), the preparer that fills in your figures (M3) and the truth watchdog (M6)
+> are done and tested — 393 tests. No account, no database, no API keys: your profile lives
+> in your browser. See [Roadmap](#roadmap).
 
 ---
 
@@ -80,6 +80,8 @@ rules/*.yaml  ──►  loader ──►  engine  ──►  actions  ──►
 | Profile | [`src/lib/profile/`](src/lib/profile/) | Runtime schemas, lifecycle phase, persistence |
 | Assessment | [`src/lib/assessment/`](src/lib/assessment/) | The questions, as data rather than as screens |
 | Preparer | [`src/lib/prepare/`](src/lib/prepare/) | Turns an action into figures, a checklist and caveats |
+| Reminders | [`src/lib/notify/`](src/lib/notify/) | Which reminder is due today, and what it says |
+| Watchdog | [`src/lib/truth/`](src/lib/truth/) | Re-reads the official pages and reports what moved |
 | App | [`src/app/`](src/app/), [`src/components/`](src/components/) | Next.js; three views: Parcours, Pilotage, Focus |
 
 Two rules of thumb hold the whole thing together:
@@ -110,6 +112,18 @@ npx tsx scripts/fetch-source.ts F23844
 ```bash
 npx tsx scripts/fetch-source.ts --all
 ```
+
+Once a week, [a workflow](.github/workflows/truth-watchdog.yml) re-reads every archived page,
+compares it with the copy in git, and opens an issue naming what moved and which rules that
+puts in doubt:
+
+```bash
+npx tsx scripts/check-sources.ts
+```
+
+It never edits a rule. An app that rewrites its own tax figures because a web page moved is
+precisely what this project refuses to be — a human reads the page and lands the correction
+as a commit, with a new millésime rather than an edit when a figure has changed.
 
 <details>
 <summary><strong>18 archived fiches</strong> — click to expand</summary>
@@ -200,9 +214,9 @@ be a scored comparison or a decision tree.
 | M2 | Assessment (SIREN + wizard), dashboards, local profile | done, except auth |
 | M2.5 | Auth + persistence (Supabase, EU region) | blocked — needs credentials |
 | M3 | The preparer: computed amounts, checklists, caveats | done for URSSAF, CFE, thresholds |
-| M4 | Notifications: J-30 / J-7 / J-1, email and web push | next |
+| M4 | Notifications: J-30 / J-7 / J-1, email and web push | scheduling done, transport needs keys |
 | M5 | AI edges: document parsing, grounded Q&A over service-public data | planned |
-| M6 | Truth watchdog: weekly source diff, staleness alerts | planned |
+| M6 | Truth watchdog: weekly source diff, staleness alerts | done |
 
 The engine already computes correct dated actions for any profile, so each later milestone
 consumes `computeActions()` rather than reinventing it.
