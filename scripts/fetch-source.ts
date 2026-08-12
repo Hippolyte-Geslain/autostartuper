@@ -16,79 +16,13 @@
 import { writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Shared with the watchdog on purpose: if the two parsed pages differently,
+// every fiche would look changed on the next check.
+import { extractFiche } from '../src/lib/truth/fiche';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'docs', 'sources');
 const BASE = 'https://entreprendre.service-public.gouv.fr/vosdroits';
-
-/** Everything before the verification line is site chrome, not content. */
-const CONTENT_START = /Vérifié le/;
-/** …and the feedback widget is where the content ends. */
-const CONTENT_END = /Cette page vous a-t-elle été utile/;
-
-function decodeEntities(text: string): string {
-  const named: Record<string, string> = {
-    amp: '&',
-    lt: '<',
-    gt: '>',
-    quot: '"',
-    '#39': "'",
-    nbsp: ' ',
-    laquo: '«',
-    raquo: '»',
-    eacute: 'é',
-    egrave: 'è',
-    agrave: 'à',
-    ccedil: 'ç',
-    ecirc: 'ê',
-    ocirc: 'ô',
-    ucirc: 'û',
-    icirc: 'î',
-    euro: '€',
-    hellip: '…',
-    rsquo: '’',
-    lsquo: '‘',
-    ldquo: '“',
-    rdquo: '”',
-    mdash: '—',
-    ndash: '–',
-  };
-  return text
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&([a-z#0-9]+);/gi, (whole, name) => named[name] ?? whole);
-}
-
-/** HTML → readable plain text. Crude by design: this is an archive, not a renderer. */
-function toText(html: string): string {
-  const withoutCode = html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ');
-  const withBreaks = withoutCode
-    .replace(/<\/(p|div|li|h[1-6]|tr|section)>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '- ')
-    .replace(/<br\s*\/?>/gi, '\n');
-  return decodeEntities(withBreaks.replace(/<[^>]+>/g, ' '))
-    .replace(/[ \t ]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/^[ \t]+|[ \t]+$/gm, '')
-    .trim();
-}
-
-function extract(html: string): { title: string; verifiedOn: string; body: string } {
-  const rawTitle = /<title>([^<]*)<\/title>/i.exec(html)?.[1] ?? '';
-  const title = decodeEntities(rawTitle).replace(/\s*\|\s*Service Public.*$/i, '').trim();
-
-  const text = toText(html);
-  const start = text.search(CONTENT_START);
-  const end = text.search(CONTENT_END);
-  const body = text.slice(start === -1 ? 0 : start, end === -1 ? undefined : end).trim();
-
-  // "Vérifié le 10 avril 2026" is the site's own freshness stamp, and it is the
-  // date a rule's `verified_on` should be able to point at.
-  const verifiedOn = /Vérifié le ([^-\n]+)/.exec(body)?.[1]?.trim() ?? 'inconnu';
-
-  return { title, verifiedOn, body };
-}
 
 function slugify(title: string): string {
   return title
@@ -109,7 +43,7 @@ async function archive(fiche: string): Promise<void> {
     return;
   }
 
-  const { title, verifiedOn, body } = extract(await response.text());
+  const { title, verifiedOn, body } = extractFiche(await response.text());
   if (body.length < 500) {
     // A page that short is a redirect or an error page dressed as a 200.
     console.error(`${fiche}: content too short (${body.length} chars) — skipped`);

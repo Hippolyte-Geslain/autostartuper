@@ -1,0 +1,66 @@
+name: Truth watchdog
+
+# The rules are only as good as the day someone last read the page behind them.
+# This job reads them all again, every week, and asks a human to look when one
+# has moved. It never edits a rule: truth changes through a reviewed commit.
+on:
+  schedule:
+    # Monday 06:00 UTC — a change lands at the start of a week, not in it.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Staleness is a separate signal from change: a page can be untouched for
+      # a year and still need re-reading. validate-rules warns past 183 days.
+      - name: Staleness check
+        run: npm run validate:rules -- --min 14
+
+      - name: Compare sources against the archive
+        id: check
+        continue-on-error: true
+        run: |
+          npx tsx scripts/check-sources.ts | tee watchdog-report.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue when something moved
+        if: steps.check.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "The weekly source check found a difference between an official page and"
+            echo "its archived copy in \`docs/sources/\`."
+            echo
+            echo "**Nothing has been changed automatically.** A human must open each page,"
+            echo "decide whether a rule is now wrong, and land the correction as a commit —"
+            echo "with a new millésime rather than an edit when a figure has changed."
+            echo
+            echo '```'
+            cat watchdog-report.txt
+            echo '```'
+            echo
+            echo "Refresh the archive once the pages have been read:"
+            echo
+            echo '```bash'
+            echo "npx tsx scripts/check-sources.ts --update"
+            echo '```'
+          } > issue-body.md
+
+          gh issue create \
+            --title "Truth watchdog: a source moved ($(date -u +%Y-%m-%d))" \
+            --body-file issue-body.md \
+            --label truth
