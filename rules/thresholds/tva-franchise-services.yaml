@@ -1,6 +1,7 @@
 # Base threshold. The tolerance (seuil majoré) for services is 41 250 €.
 # Same repeal story as the vente threshold: law 2025-1044 of 3 November 2025
 # dropped the planned single 25 000 € threshold, so this amount still stands.
+# v1: rule scoped to micro; other forms in M2+ (the franchise is not micro-only).
 id: tva-franchise-services
 type: threshold
 title: "Seuil de franchise en base de TVA — prestations de services"

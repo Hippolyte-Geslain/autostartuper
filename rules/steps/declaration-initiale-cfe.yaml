@@ -1,5 +1,7 @@
 # Due by 31 December of the year the business is created; it sets the CFE owed
 # the year after. Filed once, hence a step rather than an annual obligation.
+# v1: rule scoped to micro; other forms in M2+. Kept in step with cfe-paiement,
+# which is scoped the same way for the same reason.
 id: declaration-initiale-cfe
 type: roadmap_step
 title: "Déposer la déclaration initiale de CFE (formulaire 1447-C)"

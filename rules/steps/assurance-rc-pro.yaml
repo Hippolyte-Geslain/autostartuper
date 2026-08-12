@@ -1,5 +1,6 @@
 # Not every activity must be insured, but several regulated ones must (bâtiment,
 # santé, transport...). The step is to check, and the fiche says for whom.
+# v1: rule scoped to micro; other forms in M2+.
 id: assurance-rc-pro
 type: roadmap_step
 title: "Vérifier vos obligations d'assurance professionnelle (RC pro)"

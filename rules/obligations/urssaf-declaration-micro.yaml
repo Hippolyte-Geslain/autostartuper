@@ -4,10 +4,10 @@
 id: urssaf-declaration-micro
 type: obligation
 title: "Déclarer votre chiffre d'affaires à l'Urssaf"
-applies_to:
-  legal_forms: [micro]
 schedule:
   kind: periodic
+applies_to:
+  legal_forms: [micro]
 source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F23257
 verified_on: 2026-08-09
 valid_from: 2025-01-01

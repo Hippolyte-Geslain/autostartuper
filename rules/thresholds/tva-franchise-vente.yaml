@@ -2,6 +2,7 @@
 # of 93 500 € buys you the rest of the year, and passing that ends the franchise
 # on the spot. The single 25 000 € threshold voted in the 2025 finance law was
 # repealed by law 2025-1044 of 3 November 2025, so these amounts still stand.
+# v1: rule scoped to micro; other forms in M2+ (the franchise is not micro-only).
 id: tva-franchise-vente
 type: threshold
 title: "Seuil de franchise en base de TVA — vente de marchandises et hébergement"

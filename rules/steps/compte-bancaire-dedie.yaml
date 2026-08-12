@@ -1,5 +1,13 @@
-# Mandatory once turnover passes 10 000 € two years running; recommended before
-# that. The title stays an action; the fiche carries the condition.
+# Two separate rules, both in fiche F35991:
+#  - Every micro-entrepreneur must open a DEDICATED account once turnover passes
+#    10 000 € for two years running; below that it is only recommended.
+#  - A commerçant (activité commerciale) must hold an account separate from
+#    their personal one for that activity REGARDLESS of the 10 000 €/2-year
+#    test. So for a vente profile this step is required from day one.
+# Neither rule requires a business ("compte pro") account — a second personal
+# account is enough. M2 copy is written from this comment: "recommended" and
+# "required" are different buttons, and which one shows depends on the profile.
+# The title stays an action; the fiche carries the conditions.
 id: compte-bancaire-dedie
 type: roadmap_step
 title: "Ouvrir un compte bancaire dédié à votre activité"

@@ -14,6 +14,8 @@
 
 **Amendments during execution (Task 2 review):** the schema contract in `src/lib/rules/types.ts` is stricter than the snippets below — source URLs must be **https** on official domains (`OFFICIAL_SUFFIXES` exported); dates are calendar-validated (`IsoDateSchema` exported; `Millesime` type exported for Task 6); `valid_until >= valid_from` enforced; rule `id` must match `/^[a-z0-9-]+$/`; `options_all`/`options_none` use the closed `KnownOptionSchema` enum (`acre`, `versement-liberatoire`); all rule/schedule objects are strictObject (unknown keys reject); `warn_ratio` is exclusive (0,1). Deferred hardening: prerequisite referential integrity → Task 3 loader; `verified_on` not-in-future + staleness warning → Task 4 script. All plan YAML/fixtures already conform.
 
+**Amendments (Task 8 review):** the plan's micro plafonds were the **stale 2023-2025 vintage**. The seeded rules carry the current millésime: **203 100 € (vente)** and **83 600 € (services)**, `valid_from: 2026-01-01`, `valid_until: 2028-12-31` (service-public F32353 + actualité A18813 state 2026, 2027 and 2028 explicitly; `impots.gouv.fr`'s micro FAQ still serves the old figures — do not "correct" back). TVA franchise 85 000 / 37 500 confirmed unchanged (the single 25 000 € threshold was repealed by law 2025-1044 of 2025-11-03). **Source URL corrections:** F36239 (an EURL page) → **F35991** for the dedicated bank account; `urssaf.fr` is unreachable from this environment → **F23257** for declaration timing; canonical host is `entreprendre.service-public.gouv.fr`. **v1 scoping:** every seeded rule is scoped `legal_forms: [micro]`, including `cfe-paiement` (which the CFE law does not limit to micro) — the marker comment `# v1: rule scoped to micro; other forms in M2+` distinguishes scope from fact. **Task 9 consequence:** persona Karim was 7 × 23 000 = 161 000 €, which against the new 203 100 € plafond is ratio 0.7927 — below `warn_ratio` 0.8, so no alert fires and the persona stops exercising the warning band. Karim is now 7 × 24 000 = **168 000 €** (plafond 168000/203100 = 0.8272 → warning; TVA 168000/85000 = 1.9765 → exceeded).
+
 **Amendments (Task 7 review):** `ThresholdAlert` carries `ytd` (euros) and no `thresholdId` (engine maps `r.id`); sums are cent-exact; `evaluateThreshold` guards `today` via `parseISO`; the prerequisite check in `pendingSteps` is deliberately SHALLOW (completing a step implies its preconditions). **Guards for later tasks:** Task 8 seed rules must declare NO prerequisites until the loader gains a per-profile satisfiability check (a prereq whose `applies_to` excludes a user blocks its dependents forever, silently); Task 9 derives the alert level union from `ThresholdAlert['level']`; M2 adds `RevenueEntrySchema` before revenue comes from user input.
 
 **Amendments (Task 6 review):** `AppliesTo` arrays require `.min(1)` (empty `legal_forms: []` used to load and silently match nobody; omit the field for "no constraint"). **Open decision deferred to M2+ (before any second millésime is authored):** the non-overlap invariant between successive millésimes of the same rule is currently maintained by hand — the schema has no lineage field (`supersedes`/family key), so `validateRuleGraph` cannot detect two overlapping vintages of one rule. Decide lineage + loader overlap check when the first year-change lands (watchdog era). Do not bolt it onto the matcher; `activeOn` is deliberately a per-rule predicate.
@@ -1085,7 +1087,7 @@ export const personaNora: BusinessProfile = {
   revenueEntries: [{ month: '2026-07', amount: 4200 }],
 };
 
-/** Karim — micro seller, monthly URSSAF, established, high revenue (161 000 € YTD). */
+/** Karim — micro seller, monthly URSSAF, established, high revenue (168 000 € YTD). */
 export const personaKarim: BusinessProfile = {
   legalForm: 'micro',
   activityCategory: 'vente',
@@ -1094,7 +1096,7 @@ export const personaKarim: BusinessProfile = {
   urssafFrequency: 'monthly',
   revenueEntries: ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07'].map((month) => ({
     month,
-    amount: 23000,
+    amount: 24000,
   })),
 };
 
@@ -1145,9 +1147,9 @@ describe('golden personas', () => {
     ]);
     const [tva, plafond] = actions as Extract<ActionInstance, { type: 'threshold-alert' }>[];
     expect(tva.level).toBe('exceeded');
-    expect(tva.ratio).toBeCloseTo(1.894, 3); // 161000 / 85000
+    expect(tva.ratio).toBeCloseTo(1.9765, 4); // 168000 / 85000 = 1.976470588…
     expect(plafond.level).toBe('warning');
-    expect(plafond.ratio).toBeCloseTo(0.853, 3); // 161000 / 188700
+    expect(plafond.ratio).toBeCloseTo(0.8272, 4); // 168000 / 203100 = 0.827178729…
   });
 
   it('Sofia: nothing applies (rule filtering works)', () => {
