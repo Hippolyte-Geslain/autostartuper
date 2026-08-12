@@ -124,6 +124,12 @@ describe('loadRules, one failure mode at a time', () => {
     expect(message).toContain("nonstep-step: prerequisite 'nonstep-seuil' is not a roadmap_step");
   });
 
+  it('reports a prerequisite its dependent’s users can never satisfy', () => {
+    const message = loadError(join(INVALID, 'invalid-unreachable-prereq'));
+    expect(problems(message)).toHaveLength(1);
+    expect(message).toContain('blocked forever');
+  });
+
   it('reports a prerequisite cycle, naming the rules involved', () => {
     const message = loadError(join(INVALID, 'invalid-cycle'));
     expect(problems(message)).toHaveLength(1);
@@ -134,7 +140,7 @@ describe('loadRules, one failure mode at a time', () => {
 describe('loadRules aggregation', () => {
   it('reports every kind of problem in a single throw', () => {
     const message = loadError(INVALID);
-    expect(problems(message)).toHaveLength(7);
+    expect(problems(message)).toHaveLength(8);
     expect(message).toMatch(/source_url: must be an official https source/);
     expect(message).toContain('malformed.yaml');
     expect(message).toContain('file is empty');

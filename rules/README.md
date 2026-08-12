@@ -99,10 +99,22 @@ Renaming one breaks saved user state.
 
 ## `prerequisites` (steps only)
 
-Currently **none of the seed rules use them**, deliberately. The loader does not
-yet check that a prerequisite is *reachable* for a given profile: a prereq whose
-`applies_to` excludes a user blocks every dependent step forever, silently. Add
-that check before the first prerequisite is authored.
+Now safe to use. The loader rejects a prerequisite that some of its dependent's
+users could never satisfy — the silent trap where a step is shown to a micro
+user, its prerequisite is not, and the step stays blocked forever with nothing
+to explain why.
+
+Two rules follow from that check:
+
+- the prerequisite's `applies_to` must be **at least as broad** as its
+  dependent's. Narrower is a hard error.
+- the prerequisite must sit in the **same phase or an earlier** one. The roadmap
+  does not go backwards, so a `routine` prerequisite can never be completed by
+  someone still in `lancement`.
+
+The dependency graph is also checked for dangling ids, non-step targets and
+cycles. Note that `pendingSteps` looks only at *direct* prerequisites: ticking a
+step off asserts the state it leaves you in.
 
 ## Before you commit
 

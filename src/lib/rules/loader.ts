@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 import { RuleSchema } from './types';
 import type { Rule } from './types';
+import { findUnsatisfiablePrerequisites } from './satisfiability';
 
 /** A parsed rule paired with the file it came from, so errors can point at it. */
 export interface LoadedRule {
@@ -112,6 +113,12 @@ export function validateRuleGraph(rules: LoadedRule[]): string[] {
   }
 
   errors.push(...findPrerequisiteCycles(steps));
+
+  // A prerequisite can resolve, name a real step and still be unreachable for
+  // the very users who see its dependent. That one is invisible at runtime —
+  // the step simply never becomes available — so it is caught here instead.
+  errors.push(...findUnsatisfiablePrerequisites(rules.map(({ rule }) => rule)));
+
   return errors;
 }
 

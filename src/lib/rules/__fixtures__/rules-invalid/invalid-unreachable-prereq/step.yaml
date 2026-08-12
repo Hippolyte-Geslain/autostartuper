@@ -1,0 +1,12 @@
+# The trap: a micro user is shown this step, never sees its prerequisite, and
+# the step stays blocked forever with nothing to explain why.
+id: unreachable-dependent
+type: roadmap_step
+title: Étape bloquée pour les micro
+phase: lancement
+prerequisites: [unreachable-prereq]
+applies_to:
+  legal_forms: [micro]
+source_url: https://www.impots.gouv.fr/accueil
+verified_on: 2026-08-07
+valid_from: 2025-01-01
