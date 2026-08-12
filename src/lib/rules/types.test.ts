@@ -90,12 +90,12 @@ describe('RuleSchema', () => {
   });
 
   it('defaults threshold warn_ratio to 0.8', () => {
-    const r = ThresholdSchema.parse(threshold({ value: 77700 }));
+    const r = ThresholdSchema.parse(threshold({ value: 100000 }));
     expect(r.warn_ratio).toBe(0.8);
   });
 
   it('keeps an explicit warn_ratio', () => {
-    const r = ThresholdSchema.parse(threshold({ value: 77700, warn_ratio: 0.5 }));
+    const r = ThresholdSchema.parse(threshold({ value: 100000, warn_ratio: 0.5 }));
     expect(r.warn_ratio).toBe(0.5);
   });
 

@@ -69,7 +69,7 @@ describe('activeOn (millésime)', () => {
       valid_until: '2025-12-31',
       applies_to: { legal_forms: ['micro'] },
       type: 'threshold',
-      value: 77700,
+      value: 100000,
     });
     expect(activeOn(rule, '2025-06-15')).toBe(true);
     expect(activeOn(rule, '2026-08-07')).toBe(false);
