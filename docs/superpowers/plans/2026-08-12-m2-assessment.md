@@ -19,6 +19,22 @@ the app is fully usable against in-memory state before any account exists.
 The one external service used here — `recherche-entreprises.api.gouv.fr` — is public,
 keyless and rate-limited per IP. Verified reachable from this environment 2026-08-12.
 
+**Amendments (execution):** tasks 1–5 are done (commits `cffc5d2`, `e7fc526`, `f9b0bbe`, `ec678ca`).
+Deviations worth recording:
+
+- **A lone registry candidate is settled, not asked.** `nature_juridique 5720` means SASU
+  and nothing else; the recap screen is where the user confirms it.
+- **Two `idee` rules were authored** (`choix-forme-juridique` from fiche F23844,
+  `immatriculation-micro` from F36746, both verified 2026-08-12). Without them the whole
+  pre-creation branch ended at "rien à faire", which contradicts spec §5. The rule count
+  gate is now `--min 11`; the golden persona Théo asserts the two steps and no obligations.
+- **Alerts render in both home views.** Found by driving the real app: a lancement-phase
+  user past the TVA franchise saw no alert at all, because only the cockpit drew them.
+- **Persistence is an external store** (`useSyncExternalStore`), not an effect — the React
+  Compiler lint rejects `setState` in an effect body, and it was right to.
+- **Rules are cached per server process.** Adding a YAML file needs a dev-server restart.
+- The legal-form recommendation stays out of scope, as planned below.
+
 ## Tasks
 
 - **1. Profile schemas** — `src/lib/profile/schema.ts`. Zod for `BusinessProfile` and
