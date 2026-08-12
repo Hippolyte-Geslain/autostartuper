@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { impliesAppliesTo, findUnsatisfiablePrerequisites } from './satisfiability';
+import {
+  impliesAppliesTo,
+  findUnsatisfiablePrerequisites,
+  findMillesimeOverlaps,
+} from './satisfiability';
 import { RuleSchema, type Rule, type AppliesTo } from './types';
 import { loadRules } from './loader';
 
@@ -114,8 +118,69 @@ describe('findUnsatisfiablePrerequisites', () => {
   });
 });
 
+function threshold(overrides: Record<string, unknown>): Rule {
+  return RuleSchema.parse({
+    id: 'plafond-2025',
+    type: 'threshold',
+    title: 'Plafond',
+    value: 1000,
+    applies_to: {},
+    source_url: 'https://entreprendre.service-public.gouv.fr/vosdroits/F00001',
+    verified_on: '2026-01-01',
+    valid_from: '2025-01-01',
+    ...overrides,
+  });
+}
+
+describe('findMillesimeOverlaps', () => {
+  it('accepts consecutive vintages that do not touch', () => {
+    const rules = [
+      threshold({ id: 'p-2025', family: 'p', valid_from: '2025-01-01', valid_until: '2025-12-31' }),
+      threshold({ id: 'p-2026', family: 'p', valid_from: '2026-01-01', valid_until: '2026-12-31' }),
+    ];
+    expect(findMillesimeOverlaps(rules)).toEqual([]);
+  });
+
+  it('catches the common mistake: last year left open-ended', () => {
+    const rules = [
+      threshold({ id: 'p-2025', family: 'p', valid_from: '2025-01-01' }),
+      threshold({ id: 'p-2026', family: 'p', valid_from: '2026-01-01' }),
+    ];
+    expect(findMillesimeOverlaps(rules).join(' ')).toMatch(/overlaps/);
+  });
+
+  it('treats a shared end and start day as an overlap, since both bounds include it', () => {
+    const rules = [
+      threshold({ id: 'p-2025', family: 'p', valid_from: '2025-01-01', valid_until: '2026-01-01' }),
+      threshold({ id: 'p-2026', family: 'p', valid_from: '2026-01-01', valid_until: '2026-12-31' }),
+    ];
+    expect(findMillesimeOverlaps(rules)).toHaveLength(1);
+  });
+
+  it('says nothing about rules that never claimed to be the same thing', () => {
+    const rules = [
+      threshold({ id: 'plafond-a', valid_from: '2025-01-01' }),
+      threshold({ id: 'plafond-b', valid_from: '2025-06-01' }),
+    ];
+    expect(findMillesimeOverlaps(rules)).toEqual([]);
+  });
+
+  it('checks every pair in a family of three', () => {
+    const rules = [
+      threshold({ id: 'p-2024', family: 'p', valid_from: '2024-01-01', valid_until: '2024-12-31' }),
+      threshold({ id: 'p-2025', family: 'p', valid_from: '2025-01-01' }),
+      threshold({ id: 'p-2026', family: 'p', valid_from: '2026-01-01' }),
+    ];
+    expect(findMillesimeOverlaps(rules)).toHaveLength(1);
+  });
+});
+
 describe('the shipped rules', () => {
   it('declare no unsatisfiable prerequisite', () => {
     expect(findUnsatisfiablePrerequisites(loadRules('rules'))).toEqual([]);
+  });
+
+  it('have no overlapping millésimes', () => {
+    expect(findMillesimeOverlaps(loadRules('rules'))).toEqual([]);
   });
 });

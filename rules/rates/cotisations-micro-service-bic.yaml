@@ -1,6 +1,7 @@
 # Micro-social 2026: prestations de services relevant des BIC, which the fiche
 # groups with furnished housing rental and chambres d'hôtes.
 id: cotisations-micro-service-bic
+family: cotisations-micro-service-bic
 type: rate
 title: "Cotisations sociales du micro-entrepreneur — prestations de services (BIC)"
 percent: 21.2

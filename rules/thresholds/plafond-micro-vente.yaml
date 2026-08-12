@@ -2,6 +2,7 @@
 # Leaving the regime needs the ceiling passed two years running, so this value
 # is a warning line, not a cliff.
 id: plafond-micro-vente
+family: plafond-micro-vente
 type: threshold
 title: "Plafond de chiffre d'affaires du régime micro — vente de marchandises"
 value: 203100

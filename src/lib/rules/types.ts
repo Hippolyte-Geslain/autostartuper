@@ -77,6 +77,19 @@ export type Millesime = { valid_from: string; valid_until?: string };
 
 const ruleBase = {
   id: RuleIdSchema,
+  /**
+   * The family a rule belongs to across the years.
+   *
+   * A revalued figure is a new rule with a new id, not an edit — that is what
+   * lets a date in the past still resolve to what was true then. But then
+   * nothing connects `plafond-micro-vente-2023` to `plafond-micro-vente-2026`,
+   * and two vintages whose windows overlap would both match, silently doubling
+   * a user's alerts. `family` is that connection, and the loader uses it to
+   * reject overlapping windows.
+   *
+   * Optional: a rule with no successor is its own family (its id).
+   */
+  family: RuleIdSchema.optional(),
   title: z.string().trim().min(1),
   source_url: z
     .string()

@@ -6,6 +6,7 @@
 # reduced rate yet, so a profile holding the acre option must be told the figure
 # is the full rate. Modelled in the preparer, not here.
 id: cotisations-micro-vente
+family: cotisations-micro-vente
 type: rate
 title: "Cotisations sociales du micro-entrepreneur — vente de marchandises"
 percent: 12.3

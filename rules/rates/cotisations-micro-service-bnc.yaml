@@ -4,6 +4,7 @@
 # guessing from an APE code is not reliable. The preparer therefore names the
 # Cipav rate in its caveat rather than silently applying the wrong one.
 id: cotisations-micro-service-bnc
+family: cotisations-micro-service-bnc
 type: rate
 title: "Cotisations sociales du micro-entrepreneur — profession libérale non réglementée (hors Cipav)"
 percent: 25.6

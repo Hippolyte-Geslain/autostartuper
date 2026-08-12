@@ -94,3 +94,50 @@ export function findUnsatisfiablePrerequisites(rules: Rule[]): string[] {
 
   return problems;
 }
+
+/**
+ * Two vintages of the same rule whose windows overlap.
+ *
+ * `activeOn` is a per-rule predicate by design: it answers "is this rule live
+ * today", not "which vintage wins". So if `plafond-micro-vente-2025` and
+ * `plafond-micro-vente-2026` are both live on 3 January, both match, and the
+ * user gets two alerts about one ceiling — with different numbers.
+ *
+ * Rules are grouped by `family`, falling back to their own id. Two rules only
+ * collide when an author has explicitly said they are the same thing across
+ * time, which is why the field exists.
+ *
+ * An open-ended window (no `valid_until`) overlaps anything starting after it:
+ * that is the common authoring mistake — adding next year's vintage without
+ * closing this year's.
+ */
+export function findMillesimeOverlaps(rules: Rule[]): string[] {
+  const families = new Map<string, Rule[]>();
+  for (const rule of rules) {
+    const family = rule.family ?? rule.id;
+    const members = families.get(family);
+    if (members) members.push(rule);
+    else families.set(family, [rule]);
+  }
+
+  const problems: string[] = [];
+  for (const [family, members] of families) {
+    if (members.length < 2) continue;
+    const sorted = [...members].sort((a, b) => a.valid_from.localeCompare(b.valid_from));
+    for (let i = 1; i < sorted.length; i++) {
+      const earlier = sorted[i - 1];
+      const later = sorted[i];
+      // Same id twice is a duplicate, which the loader already reports. Saying
+      // it again in millésime language would describe one mistake as two.
+      if (earlier.id === later.id) continue;
+      // Both bounds are inclusive, so "ends the day the next begins" overlaps.
+      if (!earlier.valid_until || earlier.valid_until >= later.valid_from) {
+        problems.push(
+          `family '${family}': '${earlier.id}' (${earlier.valid_from}…${earlier.valid_until ?? 'open'}) ` +
+            `overlaps '${later.id}' (from ${later.valid_from}) — both would match the same day`
+        );
+      }
+    }
+  }
+  return problems;
+}

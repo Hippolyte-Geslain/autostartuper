@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 import { RuleSchema } from './types';
 import type { Rule } from './types';
-import { findUnsatisfiablePrerequisites } from './satisfiability';
+import { findUnsatisfiablePrerequisites, findMillesimeOverlaps } from './satisfiability';
 
 /** A parsed rule paired with the file it came from, so errors can point at it. */
 export interface LoadedRule {
@@ -117,7 +117,12 @@ export function validateRuleGraph(rules: LoadedRule[]): string[] {
   // A prerequisite can resolve, name a real step and still be unreachable for
   // the very users who see its dependent. That one is invisible at runtime —
   // the step simply never becomes available — so it is caught here instead.
-  errors.push(...findUnsatisfiablePrerequisites(rules.map(({ rule }) => rule)));
+  const allRules = rules.map(({ rule }) => rule);
+  errors.push(...findUnsatisfiablePrerequisites(allRules));
+
+  // Successive vintages of one rule must not both be live on the same day, or
+  // the user sees two alerts about one ceiling carrying different numbers.
+  errors.push(...findMillesimeOverlaps(allRules));
 
   return errors;
 }

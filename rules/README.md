@@ -27,6 +27,7 @@ hunt:
 
 ```
 id
+family              (optional, when the rule has vintages)
 type
 title
 <type-specific>     schedule | value, warn_ratio | phase, prerequisites
@@ -76,9 +77,20 @@ you wrote it. A revalued threshold is a **new rule with a new id**, not an edit:
 the old one keeps its window and gets a `valid_until`, so a date in the past
 still resolves to what was true then.
 
-Both bounds are inclusive. Windows for successive vintages of one rule must not
-overlap — the loader cannot check that yet (there is no lineage field), so it is
-maintained by hand.
+Both bounds are inclusive, and windows for successive vintages must not overlap.
+The loader enforces this through `family`: give every vintage of the same rule
+the same `family` value, and adding next year's figure without closing this
+year's window becomes an error instead of a user seeing two alerts about one
+ceiling with different numbers.
+
+```yaml
+id: plafond-micro-vente          # this vintage
+family: plafond-micro-vente      # the rule across the years
+valid_from: 2026-01-01
+valid_until: 2028-12-31
+```
+
+A rule with no successor can omit `family`; it is its own family.
 
 ## `source_url` and `verified_on`
 
