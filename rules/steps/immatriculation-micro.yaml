@@ -1,0 +1,19 @@
+# The registration itself, done online at the guichet des formalités des
+# entreprises. The window matters and is stated in fiche F36746: at the earliest
+# one month before the activity starts, at the latest 15 days after it has
+# started. Late registration is the most common first mistake, so the deadline
+# belongs in the M2 card copy.
+# Which register the business lands on depends on the activity (commerciale,
+# artisanale, libérale); the fiche walks through it, the app does not guess.
+# No prerequisite on choix-forme-juridique even though one is obvious: the
+# loader has no per-profile satisfiability check yet, and a prerequisite whose
+# applies_to excluded a user would block this step forever, silently.
+id: immatriculation-micro
+type: roadmap_step
+title: "Immatriculer votre micro-entreprise sur le guichet des formalités"
+phase: idee
+applies_to:
+  legal_forms: [micro]
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F36746
+verified_on: 2026-08-12
+valid_from: 2025-01-01

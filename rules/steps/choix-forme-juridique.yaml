@@ -1,0 +1,15 @@
+# The first real decision of a project: micro, EI, EURL or SASU. It sets the
+# social regime, the tax regime and how the founder's personal patrimony is
+# exposed, so nearly every later rule depends on the answer.
+# No legal_forms constraint, and that is a fact rather than a scope: someone at
+# the idée stage has not chosen one yet. The phase is what limits this step.
+# The app does not recommend a form in v1 — the fiche compares them, and a
+# sourced comparison of our own is truth-layer work for a later milestone.
+id: choix-forme-juridique
+type: roadmap_step
+title: "Choisir la forme juridique de votre entreprise"
+phase: idee
+applies_to: {}
+source_url: https://entreprendre.service-public.gouv.fr/vosdroits/F23844
+verified_on: 2026-08-12
+valid_from: 2025-01-01

@@ -54,7 +54,13 @@ describe('golden personas', () => {
   });
 
   it('Théo (idee) gets no obligations or alerts despite tripping revenue', () => {
-    expect(computeActions(rules, personaTheo, { today: TODAY })).toEqual([]);
+    const actions = computeActions(rules, personaTheo, { today: TODAY });
+    // Steps still apply — they are exactly what someone at the idea stage
+    // should see. Everything that presupposes a registered business does not.
+    expect(actions.map(shape)).toEqual([
+      ['step', 'choix-forme-juridique', ''],
+      ['step', 'immatriculation-micro', ''],
+    ]);
     // …and the gate is what does it, not the absence of matching rules: the
     // same profile one phase further along is buried in them.
     const registered = computeActions(

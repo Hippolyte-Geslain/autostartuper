@@ -17,9 +17,9 @@ jobs:
 
       # The rule gate runs first: it is the fastest job and the one most likely
       # to fail, since it also fails on a rule that has gone stale without
-      # anybody touching the code. `--min 9` catches a rules directory that
+      # anybody touching the code. `--min 11` catches a rules directory that
       # silently loses files — an empty directory is otherwise "valid".
-      - run: npm run validate:rules -- --min 9
+      - run: npm run validate:rules -- --min 11
 
       - run: npm run lint
       - run: npm test
