@@ -212,10 +212,10 @@ be a scored comparison or a decision tree.
 |---|---|---|
 | M1 | Rules engine, schemas, loader, CI | done |
 | M2 | Assessment (SIREN + wizard), dashboards, local profile | done, except auth |
-| M2.5 | Auth + persistence (Supabase, EU region) | blocked — needs credentials |
+| M2.5 | Auth + persistence (Supabase, EU region) | blocked — [SETUP.md §3](SETUP.md#3-supabase--accounts-and-persistence) |
 | M3 | The preparer: computed amounts, checklists, caveats | done for URSSAF, CFE, thresholds |
-| M4 | Notifications: J-30 / J-7 / J-1, email and web push | scheduling done, transport needs keys |
-| M5 | AI edges: document parsing, grounded Q&A over service-public data | planned |
+| M4 | Notifications: J-30 / J-7 / J-1, email and web push | scheduling done; transport needs [keys](SETUP.md#5-brevo--reminder-emails) |
+| M5 | AI edges: document parsing, grounded Q&A over service-public data | blocked — [SETUP.md §7](SETUP.md#7-mistral--the-ai-edges) |
 | M6 | Truth watchdog: weekly source diff, staleness alerts | done |
 
 The engine already computes correct dated actions for any profile, so each later milestone
@@ -225,6 +225,7 @@ consumes `computeActions()` rather than reinventing it.
 
 | Document | Read it when |
 |---|---|
+| [SETUP.md](SETUP.md) | You are unblocking one of the items below — GitHub, Supabase, Vercel, Brevo, push, Mistral |
 | [Design spec](docs/superpowers/specs/2026-08-07-autostartuper-design.md) | You want the whole product in one sitting |
 | [M1 plan — rules engine](docs/superpowers/plans/2026-08-07-m1-foundation-rules-engine.md) | You are touching the engine or the schemas |
 | [M2 plan — assessment](docs/superpowers/plans/2026-08-12-m2-assessment.md) | You are touching the wizard or the profile |
