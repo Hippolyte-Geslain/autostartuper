@@ -9,9 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Node 24 to match the npm that writes package-lock.json locally. npm 10
+      # (which ships with Node 22) rejects a lock npm 11 produced — it reports
+      # optional wasm deps as "Missing from lock file" and `npm ci` fails before
+      # a single test runs. Downgrading this breaks CI, not the lock.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
 
