@@ -9,10 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Node 24 to match the npm that writes package-lock.json locally. npm 10
-      # (which ships with Node 22) rejects a lock npm 11 produced — it reports
-      # optional wasm deps as "Missing from lock file" and `npm ci` fails before
-      # a single test runs. Downgrading this breaks CI, not the lock.
+      # Node 24 matches the version this project is developed on. Note that
+      # `npm ci` here is stricter than any local run: on Linux npm walks the
+      # dependency subtree of Tailwind's wasm fallback package, which npm on
+      # Windows skips entirely. That is why @emnapi/core and @emnapi/runtime
+      # are explicit devDependencies — see package.json.
       - uses: actions/setup-node@v4
         with:
           node-version: 24
