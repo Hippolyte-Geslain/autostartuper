@@ -3,7 +3,7 @@ fiche: F23267
 title: "Régime fiscal de la micro-entreprise"
 url: https://entreprendre.service-public.gouv.fr/vosdroits/F23267
 verified_on_source: "13 mai 2026"
-fetched_on: 2026-08-12
+fetched_on: 2026-08-25
 ---
 
 > Archived copy of an official page. The source of truth is the URL above;
@@ -490,7 +490,7 @@ Délai d’option pour le réel simplifié par une entreprise BIC nouvellement c
 
 Services en ligne et formulaires
 
-- Calculer les seuils de chiffre d'affaires du régime micro-entrepreneur (Simulateur)
+- Calculer les seuils de chiffre d'affaires du régime micro-entrepreneur (« auto-entrepreneur »)
 
 Simulateur
 

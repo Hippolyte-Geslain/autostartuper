@@ -3,7 +3,7 @@ fiche: F37353
 title: "Régime micro-social"
 url: https://entreprendre.service-public.gouv.fr/vosdroits/F37353
 verified_on_source: "21 février 2026"
-fetched_on: 2026-08-12
+fetched_on: 2026-08-25
 ---
 
 > Archived copy of an official page. The source of truth is the URL above;
@@ -159,7 +159,7 @@ Régime micro-social
 
 Services en ligne et formulaires
 
-- Calculer les seuils de chiffre d'affaires du régime micro-entrepreneur (Simulateur)
+- Calculer les seuils de chiffre d'affaires du régime micro-entrepreneur (« auto-entrepreneur »)
 
 Simulateur
 

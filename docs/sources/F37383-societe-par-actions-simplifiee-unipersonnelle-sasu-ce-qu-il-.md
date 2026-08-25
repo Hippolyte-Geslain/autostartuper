@@ -3,7 +3,7 @@ fiche: F37383
 title: "Société par actions simplifiée unipersonnelle (SASU) : ce qu'il faut savoir"
 url: https://entreprendre.service-public.gouv.fr/vosdroits/F37383
 verified_on_source: "06 février 2026"
-fetched_on: 2026-08-12
+fetched_on: 2026-08-25
 ---
 
 > Archived copy of an official page. The source of truth is the URL above;
@@ -76,7 +76,7 @@ Imposition des bénéfices
 La SASU relève du régime de l' impôt sur les sociétés (IS) . À ce titre, elle réalise chaque année une déclaration de résultat n° 2065 , dans les 3 mois de la clôture de l’exercice. Néanmoins, si l’exercice est clos le 31 décembre ou si aucun exercice ne l’est au cours d’une année, la déclaration est réalisée au plus tard le 2 e jour ouvré : titleContent suivant le 1 er mai .
 Le montant de l'impôt sur les sociétés (IS) est calculé à partir des résultats du dernier exercice clos. Le taux d'imposition est de 25 % sur la totalité de ce résultat fiscal.
 À noter
-Un taux réduit de 42 500 € s'applique aux petites et moyennes entreprises qui réalisent un chiffre d’affaires hors taxes n’excédant pas 10 000 000 € et dont le capital est entièrement libéré et détenu pour au moins 75 % par des personnes physiques. Ce taux s'applique sur la part des bénéfices allant jusqu'à 42 500 € . Au delà, le taux d'imposition est de 25 % .
+Un taux réduit de 15 % s'applique aux petites et moyennes entreprises qui réalisent un chiffre d’affaires hors taxes n’excédant pas 10 000 000 € et dont le capital est entièrement libéré et détenu pour au moins 75 % par des personnes physiques. Ce taux s'applique sur la part des bénéfices allant jusqu'à 42 500 € . Au delà, le taux d'imposition est de 25 % .
 
 En savoir plus sur l'option pour l'impôt sur le revenu (IR)
 Une société peut opter pour le régime de l'impôt sur le revenu (IR) lorsqu'elle remplit toutes les conditions suivantes :

@@ -3,7 +3,7 @@ fiche: F23844
 title: "Création d'entreprise : choisir la forme juridique de votre entreprise"
 url: https://entreprendre.service-public.gouv.fr/vosdroits/F23844
 verified_on_source: "10 avril 2026"
-fetched_on: 2026-08-12
+fetched_on: 2026-08-25
 ---
 
 > Archived copy of an official page. The source of truth is the URL above;
@@ -511,7 +511,7 @@ Simulateur
 
 Simulateur
 
-- Simulateur de revenus d'un professionnel libéral
+- Calculer les revenus d'un professionnel libéral
 
 Simulateur
 

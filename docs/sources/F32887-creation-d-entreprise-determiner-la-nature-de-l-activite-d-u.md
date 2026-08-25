@@ -3,7 +3,7 @@ fiche: F32887
 title: "Création d'entreprise : déterminer la nature de l'activité d'une entreprise"
 url: https://entreprendre.service-public.gouv.fr/vosdroits/F32887
 verified_on_source: "01 septembre 2024"
-fetched_on: 2026-08-12
+fetched_on: 2026-08-25
 ---
 
 > Archived copy of an official page. The source of truth is the URL above;
@@ -639,7 +639,7 @@ Service en ligne
 
 Outil de recherche
 
-- Quel code APE pour quelle activité ?
+- Rechercher le code APE (activité principale exercée) correspondant à son activité
 
 Simulateur
 
